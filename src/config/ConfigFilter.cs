@@ -6,19 +6,19 @@ namespace LethalSeedCracker3.src.config
 {
     internal interface IConfigFilter
     {
-        internal bool Filter(Result result);
+        internal bool Filter(FrozenResult result);
     }
 
     internal class ConfigFilter<T0>(string cmd,
         Func<Config, string, T0> parser0, T0 default0, string name0,
-        Func<Result, T0, bool> filter) : ConfigCommand<T0>(cmd, parser0, name0), IConfigFilter
+        Func<FrozenResult, T0, bool> filter) : ConfigCommand<T0>(cmd, parser0, name0), IConfigFilter
     {
         protected T0 arg0 = default0;
         internal override void Process(Config config, T0 arg0)
         {
             this.arg0 = arg0;
         }
-        bool IConfigFilter.Filter(Result result)
+        bool IConfigFilter.Filter(FrozenResult result)
         {
             return filter(result, arg0);
         }
@@ -26,7 +26,7 @@ namespace LethalSeedCracker3.src.config
     internal class ConfigFilter<T0, T1>(string cmd,
         Func<Config, string, T0> parser0, T0 default0, string name0,
         Func<Config, string, T1> parser1, T1 default1, string name1,
-        Func<Result, T0, T1, bool> filter) : ConfigCommand<T0, T1>(cmd, parser0, name0, parser1, name1), IConfigFilter
+        Func<FrozenResult, T0, T1, bool> filter) : ConfigCommand<T0, T1>(cmd, parser0, name0, parser1, name1), IConfigFilter
     {
         protected T0 arg0 = default0;
         protected T1 arg1 = default1;
@@ -35,7 +35,7 @@ namespace LethalSeedCracker3.src.config
             this.arg0 = arg0;
             this.arg1 = arg1;
         }
-        bool IConfigFilter.Filter(Result result)
+        bool IConfigFilter.Filter(FrozenResult result)
         {
             return filter(result, arg0, arg1);
         }
@@ -43,14 +43,14 @@ namespace LethalSeedCracker3.src.config
 
     internal class ConfigFilters<T0>(string cmd,
         Func<Config, string, T0> parser0, string name0,
-        Func<Result, List<T0>, bool> filter) : ConfigCommand<T0>(cmd, parser0, name0), IConfigFilter
+        Func<FrozenResult, List<T0>, bool> filter) : ConfigCommand<T0>(cmd, parser0, name0), IConfigFilter
     {
         protected List<T0> arg0s = [];
         internal override void Process(Config config, T0 arg0)
         {
             arg0s.Add(arg0);
         }
-        bool IConfigFilter.Filter(Result result)
+        bool IConfigFilter.Filter(FrozenResult result)
         {
             return filter(result, arg0s);
         }
@@ -58,7 +58,7 @@ namespace LethalSeedCracker3.src.config
     internal class ConfigFilters<T0, T1>(string cmd,
         Func<Config, string, T0> parser0, string name0,
         Func<Config, string, T1> parser1, string name1,
-        Func<Result, List<T0>, List<T1>, bool> filter) : ConfigCommand<T0, T1>(cmd, parser0, name0, parser1, name1), IConfigFilter
+        Func<FrozenResult, List<T0>, List<T1>, bool> filter) : ConfigCommand<T0, T1>(cmd, parser0, name0, parser1, name1), IConfigFilter
     {
         protected List<T0> arg0s = [];
         protected List<T1> arg1s = [];
@@ -67,7 +67,7 @@ namespace LethalSeedCracker3.src.config
             arg0s.Add(arg0);
             arg1s.Add(arg1);
         }
-        bool IConfigFilter.Filter(Result result)
+        bool IConfigFilter.Filter(FrozenResult result)
         {
             return filter(result, arg0s, arg1s);
         }
@@ -76,7 +76,7 @@ namespace LethalSeedCracker3.src.config
         Func<Config, string, T0> parser0, string name0,
         Func<Config, string, T1> parser1, string name1,
         Func<Config, string, T2> parser2, string name2,
-        Func<Result, List<T0>, List<T1>, List<T2>, bool> filter) : ConfigCommand<T0, T1, T2>(cmd, parser0, name0, parser1, name1, parser2, name2), IConfigFilter
+        Func<FrozenResult, List<T0>, List<T1>, List<T2>, bool> filter) : ConfigCommand<T0, T1, T2>(cmd, parser0, name0, parser1, name1, parser2, name2), IConfigFilter
     {
         protected List<T0> arg0s = [];
         protected List<T1> arg1s = [];
@@ -87,7 +87,7 @@ namespace LethalSeedCracker3.src.config
             arg1s.Add(arg1);
             arg2s.Add(arg2);
         }
-        bool IConfigFilter.Filter(Result result)
+        bool IConfigFilter.Filter(FrozenResult result)
         {
             return filter(result, arg0s, arg1s, arg2s);
         }

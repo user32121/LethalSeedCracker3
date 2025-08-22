@@ -1,5 +1,5 @@
 ﻿using HarmonyLib;
-using LethalSeedCracker3.src;
+using LethalSeedCracker3.src.config;
 
 namespace LethalSeedCracker3.Patches
 {

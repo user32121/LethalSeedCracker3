@@ -1,4 +1,5 @@
-﻿using System;
+﻿using LethalSeedCracker3.src.cracker;
+using System;
 using System.Collections.Generic;
 using System.IO;
 
@@ -127,6 +128,21 @@ namespace LethalSeedCracker3.src.config
             LethalSeedCracker3.Logger.LogInfo("Successfully loaded config");
         }
 
+        internal bool Filter(FrozenResult result)
+        {
+            foreach (var item in commands)
+            {
+                if (item is IConfigFilter cf)
+                {
+                    if (!cf.Filter(result))
+                    {
+                        return false;
+                    }
+                }
+            }
+            return true;
+        }
+
         private static SelectableLevel ParseMoon(Config _, string name)
         {
             foreach (var level in StartOfRound.Instance.levels)
@@ -171,20 +187,20 @@ namespace LethalSeedCracker3.src.config
             throw new Exception($"Unrecognized enemy: {name}");
         }
 
-        private Item ParseScrap(Config _, string name)
+        private static Item ParseScrap(Config config, string name)
         {
-            if (currentLevel is null)
+            if (config.currentLevel is null)
             {
                 throw new Exception("Set a moon before configuring scrap.");
             }
-            foreach (var item in currentLevel.spawnableScrap)
+            foreach (var item in config.currentLevel.spawnableScrap)
             {
                 if (IContains(item.spawnableItem.name, name) || IContains(item.spawnableItem.itemName, name))
                 {
                     return item.spawnableItem;
                 }
             }
-            PrintScrap();
+            PrintScrap(config);
             throw new Exception($"Unrecognized scrap: {name}");
         }
 
@@ -237,14 +253,14 @@ namespace LethalSeedCracker3.src.config
             }
         }
 
-        private void PrintScrap()
+        private static void PrintScrap(Config config)
         {
-            if (currentLevel is null)
+            if (config.currentLevel is null)
             {
                 throw new Exception("Set a moon before listing scrap.");
             }
             LethalSeedCracker3.Logger.LogInfo("Scrap:");
-            foreach (var item in currentLevel.spawnableScrap)
+            foreach (var item in config.currentLevel.spawnableScrap)
             {
                 LethalSeedCracker3.Logger.LogInfo($"  {item.spawnableItem.name}, {item.spawnableItem.itemName}");
             }

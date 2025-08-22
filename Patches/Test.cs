@@ -20,6 +20,9 @@ namespace LethalSeedCracker3.Patches
         [HarmonyPrefix]
         private static void UpdatePostfix(RoundManager __instance)
         {
+            //TODO
+            return;
+            /*
             switch (curState)
             {
                 case STATE.NONE:
@@ -38,6 +41,7 @@ namespace LethalSeedCracker3.Patches
                 default:
                     throw new System.Exception($"Not implemented state: {curState}");
             }
+            */
         }
 
         private static void OnLoadComplete(ulong clientId, string sceneName, LoadSceneMode loadSceneMode)

@@ -1,13 +1,14 @@
-﻿using System;
+﻿using LethalSeedCracker3.src.common;
+using System;
 
-namespace LethalSeedCracker3.src
+namespace LethalSeedCracker3.src.config
 {
     internal abstract class BaseConfigCommand(string cmd, int numArgs)
     {
         public string cmd = cmd;
         internal virtual void Parse(Config config, string[] args)
         {
-            Common.Assert(args.Length == numArgs, $"{cmd} expected {numArgs} arg, got {args.Length}");
+            Util.Assert(args.Length == numArgs, $"{cmd} expected {numArgs} arg, got {args.Length}");
         }
     }
     internal abstract class ConfigCommand(string cmd

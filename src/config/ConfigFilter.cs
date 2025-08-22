@@ -1,7 +1,8 @@
-﻿using System;
+﻿using LethalSeedCracker3.src.cracker;
+using System;
 using System.Collections.Generic;
 
-namespace LethalSeedCracker3.src
+namespace LethalSeedCracker3.src.config
 {
     internal interface IConfigFilter
     {

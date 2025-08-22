@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace LethalSeedCracker3.src
+namespace LethalSeedCracker3.src.config
 {
     internal class ConfigParameter<T0>(string cmd,
         Func<Config, string, T0> parser0, string name0,

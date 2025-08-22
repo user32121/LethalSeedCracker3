@@ -1,8 +1,8 @@
 ﻿using System;
 
-namespace LethalSeedCracker3.src
+namespace LethalSeedCracker3.src.common
 {
-    internal static class Common
+    internal static class Util
     {
         internal static void Assert(bool condition, string message)
         {

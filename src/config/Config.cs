@@ -2,13 +2,13 @@
 using System.Collections.Generic;
 using System.IO;
 
-namespace LethalSeedCracker3.src
+namespace LethalSeedCracker3.src.config
 {
     internal class Config
     {
         internal int min_seed = 0;
         internal int max_seed = 100;
-        internal SelectableLevel? currentLevel;
+        internal SelectableLevel currentLevel;
         internal int daysUntilDeadline = 3;
         internal int daysPlayersSurvivedInARow = 0;
         internal int connectedPlayersAmount = 1;

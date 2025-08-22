@@ -2,6 +2,14 @@
 
 namespace LethalSeedCracker3.src.config
 {
+    internal class ConfigParameter(string cmd,
+        Action<Config> apply) : ConfigCommand(cmd)
+    {
+        internal override void Process(Config config)
+        {
+            apply(config);
+        }
+    }
     internal class ConfigParameter<T0>(string cmd,
         Func<Config, string, T0> parser0, string name0,
         Action<Config, T0> apply) : ConfigCommand<T0>(cmd, parser0, name0)

@@ -14,11 +14,7 @@ namespace LethalSeedCracker3.src.common
 
         internal static T NonNull<T>(T? obj, string name)
         {
-            if (obj == null)
-            {
-                throw new NullReferenceException($"{name} was null");
-            }
-            return obj;
+            return obj ?? throw new ArgumentNullException(name);
         }
     }
 }

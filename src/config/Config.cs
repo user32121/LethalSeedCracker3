@@ -13,6 +13,8 @@ namespace LethalSeedCracker3.src.config
         internal int daysUntilDeadline = 3;
         internal int daysPlayersSurvivedInARow = 0;
         internal int connectedPlayersAmount = 1;
+        internal bool isAnniversary = false;
+        internal bool eclipsed = false;
 
         private static readonly Func<Config, string, int> ParseInt = (config, s) => int.Parse(s);
         private static readonly List<BaseConfigCommand> commands =
@@ -25,6 +27,8 @@ namespace LethalSeedCracker3.src.config
             new ConfigParameter<int>("daystildeadline", ParseInt, "days", (config, days) => config.daysUntilDeadline = days),
             new ConfigParameter<int>("dayssurvived", ParseInt, "days", (config, days) => config.daysPlayersSurvivedInARow = days),
             new ConfigParameter<int>("players", ParseInt, "players", (config, players) => config.connectedPlayersAmount = players),
+            new ConfigParameter("anniversary", config => config.isAnniversary = true),
+            new ConfigParameter("eclipsed", config => config.eclipsed = true),
             new ConfigFilter<EnemyType?>("infestation", ParseEnemy, null, "enemy", (result, enemy) => enemy == null || enemy == result.infestation),
             new ConfigFilters<EnemyType, Func<float, float, bool>, int>("enemy", ParseEnemy, "enemy", ParseComparator, "comparator", ParseInt, "num", (result, enemy, op, num) => {
                 for (int i = 0; i < enemy.Count; ++i) {

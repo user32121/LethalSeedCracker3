@@ -1,6 +1,7 @@
 ﻿using LethalSeedCracker3.src.config;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.AI;
 
 namespace LethalSeedCracker3.src.cracker
 {
@@ -21,7 +22,7 @@ namespace LethalSeedCracker3.src.cracker
         private static float currentOutsideEnemyPower;
         private static float currentEnemyPower;
 
-        internal static void Evaulate(Result result)
+        internal static void Evaluate(Result result)
         {
             RefreshEnemiesList(result);
             ResetEnemySpawningVariables(result.config);
@@ -141,17 +142,17 @@ namespace LethalSeedCracker3.src.cracker
             float num = TimeOfDay.Instance.lengthOfHours * currentHour;
             float num2 = result.config.currentLevel.daytimeEnemySpawnChanceThroughDay.Evaluate(num / TimeOfDay.Instance.totalTime);
             int num3 = Mathf.Clamp(result.crm.AnomalyRandom.Next((int)(num2 - result.config.currentLevel.daytimeEnemiesProbabilityRange), (int)(num2 + result.config.currentLevel.daytimeEnemiesProbabilityRange)), 0, 20);
-            //GameObject[] spawnPoints = GameObject.FindGameObjectsWithTag("OutsideAINode");
+            GameObject[] spawnPoints = GameObject.FindGameObjectsWithTag("OutsideAINode");
             for (int i = 0; i < num3; i++)
             {
-                if (!SpawnRandomDaytimeEnemy(num, result))
+                if (!SpawnRandomDaytimeEnemy(spawnPoints, num, result))
                 {
                     break;
                 }
             }
         }
 
-        private static bool SpawnRandomDaytimeEnemy(float timeUpToCurrentHour, Result result)
+        private static bool SpawnRandomDaytimeEnemy(GameObject[] spawnPoints, float timeUpToCurrentHour, Result result)
         {
             SpawnProbabilities.Clear();
             int num = 0;
@@ -189,10 +190,9 @@ namespace LethalSeedCracker3.src.cracker
                     break;
                 }
                 currentDaytimeEnemyPower += result.config.currentLevel.DaytimeEnemies[randomWeightedIndex].enemyType.PowerLevel;
-                _ = result.crm.AnomalyRandom.Next();
-                GetRandomNavMeshPositionInBoxPredictable(result.crm.EnemySpawnRandom, 10f);
-                //TODO check spawn denial points
-                //position = PositionWithDenialPointsChecked(position, spawnPoints, enemyType2);
+                Vector3 position = spawnPoints[result.crm.AnomalyRandom.Next(0, spawnPoints.Length)].transform.position;
+                position = GetRandomNavMeshPositionInBoxPredictable(position, 10f, result.crm.EnemySpawnRandom, GetLayermaskForEnemySizeLimit(enemyType2));
+                _ = PositionWithDenialPointsChecked(result, position, spawnPoints, enemyType2);
                 //GameObject gameObject = Object.Instantiate(enemyType2.enemyPrefab, position, Quaternion.Euler(Vector3.zero));
                 //gameObject.gameObject.GetComponentInChildren<NetworkObject>().Spawn(destroyWithScene: true);
                 //SpawnedEnemies.Add(gameObject.GetComponent<EnemyAI>());
@@ -217,6 +217,22 @@ namespace LethalSeedCracker3.src.cracker
             return -1;
         }
 
+        public static Vector3 GetRandomNavMeshPositionInBoxPredictable(Vector3 pos, float radius, System.Random randomSeed, int layerMask = -1, float verticalScale = 1f)
+        {
+            float y = pos.y;
+            float x = RandomNumberInRadius(radius, randomSeed);
+            float y2 = RandomNumberInRadius(radius * verticalScale, randomSeed);
+            float z = RandomNumberInRadius(radius, randomSeed);
+            Vector3 vector = new Vector3(x, y2, z) + pos;
+            vector.y = y;
+            float num = Vector3.Distance(pos, vector);
+            if (NavMesh.SamplePosition(vector, out NavMeshHit navHit, num + 2f, layerMask))
+            {
+                return navHit.position;
+            }
+            return pos;
+        }
+
         public static void GetRandomNavMeshPositionInBoxPredictable(System.Random randomSeed, float radius = 10f, float verticalScale = 1f)
         {
             _ = RandomNumberInRadius(radius, randomSeed);
@@ -229,6 +245,38 @@ namespace LethalSeedCracker3.src.cracker
             return ((float)randomSeed.NextDouble() - 0.5f) * radius;
         }
 
+        private static Vector3 PositionWithDenialPointsChecked(Result result, Vector3 spawnPosition, GameObject[] spawnPoints, EnemyType enemyType, float distanceFromShip = -1f)
+        {
+            if (spawnPoints.Length == 0)
+            {
+                Debug.LogError("Spawn points array was null in denial points check function!");
+                return spawnPosition;
+            }
+            GameObject[] spawnDenialPoints = GameObject.FindGameObjectsWithTag("SpawnDenialPoint");
+            int num = 0;
+            bool flag = false;
+            for (int i = 0; i < spawnPoints.Length - 1; i++)
+            {
+                for (int j = 0; j < spawnDenialPoints.Length; j++)
+                {
+                    flag = true;
+                    if (Vector3.Distance(spawnPosition, spawnDenialPoints[j].transform.position) < 16f || (distanceFromShip != -1f && Vector3.Distance(spawnPosition, StartOfRound.Instance.shipLandingPosition.transform.position) < distanceFromShip))
+                    {
+                        num = (num + 1) % spawnPoints.Length;
+                        spawnPosition = spawnPoints[num].transform.position;
+                        spawnPosition = GetRandomNavMeshPositionInBoxPredictable(spawnPosition, 10f, result.crm.AnomalyRandom, GetLayermaskForEnemySizeLimit(enemyType));
+                        flag = false;
+                        break;
+                    }
+                }
+                if (flag)
+                {
+                    break;
+                }
+            }
+            return spawnPosition;
+        }
+
         public static void SpawnEnemiesOutside(Result result)
         {
             if (currentOutsideEnemyPower > currentMaxOutsidePower)
@@ -239,16 +287,17 @@ namespace LethalSeedCracker3.src.cracker
             float num2 = (int)(result.config.currentLevel.outsideEnemySpawnChanceThroughDay.Evaluate(num / TimeOfDay.Instance.totalTime) * 100f) / 100f;
             float num3 = num2 + Mathf.Abs(TimeOfDay.Instance.daysUntilDeadline - 3) / 1.6f;
             int num4 = Mathf.Clamp(result.crm.OutsideEnemySpawnRandom.Next((int)(num3 - 3f), (int)(num2 + 3f)), minOutsideEnemiesToSpawn, 20);
+            GameObject[] spawnPoints = GameObject.FindGameObjectsWithTag("OutsideAINode");
             for (int i = 0; i < num4; i++)
             {
-                if (!SpawnRandomOutsideEnemy(num, result))
+                if (!SpawnRandomOutsideEnemy(spawnPoints, num, result))
                 {
                     break;
                 }
             }
         }
 
-        private static bool SpawnRandomOutsideEnemy(float timeUpToCurrentHour, Result result)
+        private static bool SpawnRandomOutsideEnemy(GameObject[] spawnPoints, float timeUpToCurrentHour, Result result)
         {
             SpawnProbabilities.Clear();
             int num = 0;
@@ -304,10 +353,9 @@ namespace LethalSeedCracker3.src.cracker
                     break;
                 }
                 currentOutsideEnemyPower += result.config.currentLevel.OutsideEnemies[randomWeightedIndex].enemyType.PowerLevel;
-                _ = result.crm.AnomalyRandom.Next();
-                GetRandomNavMeshPositionInBoxPredictable(result.crm.AnomalyRandom, 10f, GetLayermaskForEnemySizeLimit(enemyType2));
-                //TODO check spawn denial points
-                //position = PositionWithDenialPointsChecked(position, spawnPoints, enemyType2);
+                Vector3 position = spawnPoints[result.crm.AnomalyRandom.Next(0, spawnPoints.Length)].transform.position;
+                position = GetRandomNavMeshPositionInBoxPredictable(position, 10f, result.crm.AnomalyRandom, GetLayermaskForEnemySizeLimit(enemyType2));
+                position = PositionWithDenialPointsChecked(result, position, spawnPoints, enemyType2);
                 //GameObject gameObject = Object.Instantiate(enemyType2.enemyPrefab, position, Quaternion.Euler(Vector3.zero));
                 //gameObject.gameObject.GetComponentInChildren<NetworkObject>().Spawn(destroyWithScene: true);
                 //SpawnedEnemies.Add(gameObject.GetComponent<EnemyAI>());
@@ -342,8 +390,8 @@ namespace LethalSeedCracker3.src.cracker
             float num4 = TimeOfDay.Instance.lengthOfHours * currentHour;
             for (int j = 0; j < num3; j++)
             {
-                _ = result.crm.AnomalyRandom.Next((int)(10f + num4), (int)(TimeOfDay.Instance.lengthOfHours * RoundManager.Instance.hourTimeBetweenEnemySpawnBatches + num4));
-                _ = result.crm.AnomalyRandom.Next();
+                result.crm.AnomalyRandom.Next((int)(10f + num4), (int)(TimeOfDay.Instance.lengthOfHours * RoundManager.Instance.hourTimeBetweenEnemySpawnBatches + num4));
+                result.crm.AnomalyRandom.Next();
                 if (!AssignRandomEnemyToVent(result))
                 {
                     break;

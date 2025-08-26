@@ -64,9 +64,10 @@ namespace LethalSeedCracker3.src.cracker
 
             System.Random random = new(result.seed + 28);
             int num = 7;
-            result.meteorShower = random.Next(0, 1000) < num;
+            bool meteorShower;
+            result.meteorShower = meteorShower = random.Next(0, 1000) < num;
             result.meteorShowerAtTime = -1f;
-            if (result.meteorShower)
+            if (meteorShower)
             {
                 result.meteorShowerAtTime = random.Next(5, 80) / 100f;
             }

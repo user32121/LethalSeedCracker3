@@ -59,7 +59,9 @@ namespace LethalSeedCracker3.Patches
                 }
                 Result result = new(seed, config);
                 LevelEvaluator.Evaulate(result);
-                EnemyEvaluator.Evaulate(result);
+                ScrapEvaluator.Evaluate(result);
+                EnemyEvaluator.Evaluate(result);
+                WeatherEvaluator.Evaluate(result);
                 FrozenResult fr = new(result);
                 if (config.Filter(fr))
                 {
@@ -67,6 +69,7 @@ namespace LethalSeedCracker3.Patches
                     fr.Save("results3.txt", "seeds3.txt", seedsFound > 0);
                     ++seedsFound;
                 }
+                fr.Cleanup();
             }
             LethalSeedCracker3.Logger.LogInfo($"Found {seedsFound} seeds");
         }

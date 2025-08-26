@@ -12,9 +12,13 @@ namespace LethalSeedCracker3.src.common
             }
         }
 
-        internal static T NonNull<T>(T? obj, string name)
+        internal static T NonNull<T>(T? obj, string name) => obj ?? throw new ArgumentNullException(name);
+        internal static T NonNull<T>(T? obj, string name) where T : struct => obj ?? throw new ArgumentNullException(name);
+
+        internal static T Inspect<T>(T obj, string format = "{0}")
         {
-            return obj ?? throw new ArgumentNullException(name);
+            LethalSeedCracker3.Logger.LogInfo(string.Format(format, obj));
+            return obj;
         }
     }
 }

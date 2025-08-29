@@ -24,6 +24,10 @@ namespace LethalSeedCracker3.src.cracker
 
         internal static void Evaluate(Result result)
         {
+            if (result.config.verbose)
+            {
+                LethalSeedCracker3.Logger.LogInfo("enemy evaluate");
+            }
             RefreshEnemiesList(result);
             ResetEnemySpawningVariables(result.config);
             while (currentHour < TimeOfDay.Instance.numberOfHours)
@@ -355,7 +359,7 @@ namespace LethalSeedCracker3.src.cracker
                 currentOutsideEnemyPower += result.config.currentLevel.OutsideEnemies[randomWeightedIndex].enemyType.PowerLevel;
                 Vector3 position = spawnPoints[result.crm.AnomalyRandom.Next(0, spawnPoints.Length)].transform.position;
                 position = GetRandomNavMeshPositionInBoxPredictable(position, 10f, result.crm.AnomalyRandom, GetLayermaskForEnemySizeLimit(enemyType2));
-                position = PositionWithDenialPointsChecked(result, position, spawnPoints, enemyType2);
+                _ = PositionWithDenialPointsChecked(result, position, spawnPoints, enemyType2);
                 //GameObject gameObject = Object.Instantiate(enemyType2.enemyPrefab, position, Quaternion.Euler(Vector3.zero));
                 //gameObject.gameObject.GetComponentInChildren<NetworkObject>().Spawn(destroyWithScene: true);
                 //SpawnedEnemies.Add(gameObject.GetComponent<EnemyAI>());

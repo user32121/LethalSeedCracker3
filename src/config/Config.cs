@@ -7,6 +7,7 @@ namespace LethalSeedCracker3.src.config
 {
     internal class Config
     {
+        internal bool verbose = false;
         internal int min_seed = 0;
         internal int max_seed = 100;
         internal SelectableLevel currentLevel;
@@ -19,6 +20,7 @@ namespace LethalSeedCracker3.src.config
         private static readonly Func<Config, string, int> ParseInt = (config, s) => int.Parse(s);
         private static readonly List<BaseConfigCommand> commands =
         [
+            new ConfigParameter("verbose", config => config.verbose= true),
             new ConfigParameter<int, int>("seed", ParseInt, "min", ParseInt, "max", (config, min, max) => {
                 config.min_seed = min;
                 config.max_seed = max;

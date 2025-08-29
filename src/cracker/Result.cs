@@ -1,4 +1,5 @@
-﻿using LethalSeedCracker3.src.common;
+﻿using DunGen;
+using LethalSeedCracker3.src.common;
 using LethalSeedCracker3.src.config;
 using System;
 using System.Collections.Generic;
@@ -30,6 +31,14 @@ namespace LethalSeedCracker3.src.cracker
         //misc
         internal CompanyMood? currentCompanyMood;
         internal Dictionary<SelectableLevel, LevelWeatherType>? weathers;
+
+        internal void Cleanup()
+        {
+            RuntimeDungeon dungeonGenerator = UnityEngine.Object.FindObjectOfType<RuntimeDungeon>(includeInactive: false);
+            dungeonGenerator.Generator.Clear(true);
+            RoundManager.Instance.UnloadSceneObjectsEarly();
+            RoundManager.Instance.DespawnPropsAtEndOfRound();
+        }
     }
 
     internal class FrozenResult(Result result)
@@ -96,11 +105,6 @@ namespace LethalSeedCracker3.src.cracker
             LethalSeedCracker3.Logger.LogInfo($"writing seed to: {filePath}");
             using StreamWriter compressedFile = new(File.Open(filePath, append ? FileMode.Append : FileMode.Create));
             compressedFile.WriteLine("seeds " + seed);
-        }
-
-        internal void Cleanup()
-        {
-
         }
     }
 }

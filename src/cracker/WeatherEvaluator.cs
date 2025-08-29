@@ -7,6 +7,10 @@ namespace LethalSeedCracker3.src.cracker
     {
         internal static void Evaluate(Result result)
         {
+            if (result.config.verbose)
+            {
+                LethalSeedCracker3.Logger.LogInfo("weather evaluate");
+            }
             SetPlanetsWeather(result);
         }
 

@@ -1,4 +1,5 @@
 ﻿using HarmonyLib;
+using LethalSeedCracker3.src.common;
 using LethalSeedCracker3.src.config;
 using LethalSeedCracker3.src.cracker;
 using UnityEngine.SceneManagement;
@@ -10,14 +11,20 @@ namespace LethalSeedCracker3.Patches
     {
         private static readonly Config config = new("config3.txt");
 
-        private enum STATE
+        internal enum STATE
         {
             NONE,
             LOAD_SCENE,
             LOADED_SCENE,
-            CRACKING,
+            CRACKING_PRE_DUNGEN,
+            CRACKING_GEN_DUNGEN,
+            CRACKING_POST_DUNGEN,
+            DONE_CRACKING,
         };
-        private static STATE curState;
+        internal static STATE curState;
+        private static int seedsFound = 0;
+        private static int curSeed;
+        private static Result? curResult;
 
         [HarmonyPatch("Update")]
         [HarmonyPrefix]
@@ -34,9 +41,17 @@ namespace LethalSeedCracker3.Patches
                     break;
                 case STATE.LOADED_SCENE:
                     StartCracking();
-                    curState = STATE.CRACKING;
+                    curState = STATE.CRACKING_PRE_DUNGEN;
                     break;
-                case STATE.CRACKING:
+                case STATE.CRACKING_PRE_DUNGEN:
+                    ContinueCrackingPreDunGen();
+                    break;
+                case STATE.CRACKING_GEN_DUNGEN:
+                    break;
+                case STATE.CRACKING_POST_DUNGEN:
+                    ContinueCrackingPostDunGen();
+                    break;
+                case STATE.DONE_CRACKING:
                     break;
                 default:
                     throw new System.Exception($"Not implemented state: {curState}");
@@ -50,28 +65,44 @@ namespace LethalSeedCracker3.Patches
 
         private static void StartCracking()
         {
-            int seedsFound = 0;
-            for (int seed = config.min_seed; seed <= config.max_seed; ++seed)
+            curSeed = config.min_seed;
+        }
+
+        private static void ContinueCrackingPreDunGen()
+        {
+            if (curSeed % 1000 == 0)
             {
-                if (seed % 1000 == 0)
-                {
-                    LethalSeedCracker3.Logger.LogInfo($"seed {seed}/{config.max_seed}");
-                }
-                Result result = new(seed, config);
-                LevelEvaluator.Evaulate(result);
-                ScrapEvaluator.Evaluate(result);
-                EnemyEvaluator.Evaluate(result);
-                WeatherEvaluator.Evaluate(result);
-                FrozenResult fr = new(result);
-                if (config.Filter(fr))
-                {
-                    LethalSeedCracker3.Logger.LogInfo(fr.ToFormattedString("\n  ", ", "));
-                    fr.Save("results3.txt", "seeds3.txt", seedsFound > 0);
-                    ++seedsFound;
-                }
-                fr.Cleanup();
+                LethalSeedCracker3.Logger.LogInfo($"seed {curSeed}/{config.max_seed}");
             }
-            LethalSeedCracker3.Logger.LogInfo($"Found {seedsFound} seeds");
+            curResult = new(curSeed, config);
+            LevelEvaluator.EvaluatePreDunGen(curResult);
+        }
+
+        private static void ContinueCrackingPostDunGen()
+        {
+            curResult = Util.NonNull(curResult, nameof(curResult));
+            LevelEvaluator.EvaluatePostDunGen(curResult);
+            ScrapEvaluator.Evaluate(curResult);
+            EnemyEvaluator.Evaluate(curResult);
+            WeatherEvaluator.Evaluate(curResult);
+            FrozenResult fr = new(curResult);
+            if (config.Filter(fr))
+            {
+                LethalSeedCracker3.Logger.LogInfo(fr.ToFormattedString("\n  ", ", "));
+                fr.Save("results3.txt", "seeds3.txt", seedsFound > 0);
+                ++seedsFound;
+            }
+            curResult.Cleanup();
+            ++curSeed;
+            if (curSeed >= config.max_seed)
+            {
+                LethalSeedCracker3.Logger.LogInfo($"Found {seedsFound} seeds");
+                curState = STATE.DONE_CRACKING;
+            }
+            else
+            {
+                curState = STATE.CRACKING_PRE_DUNGEN;
+            }
         }
     }
 }

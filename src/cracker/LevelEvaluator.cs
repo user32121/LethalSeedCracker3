@@ -1,4 +1,6 @@
-﻿using System.Collections.Generic;
+﻿using DunGen;
+using LethalSeedCracker3.Patches;
+using System.Collections.Generic;
 using UnityEngine;
 
 namespace LethalSeedCracker3.src.cracker
@@ -7,15 +9,35 @@ namespace LethalSeedCracker3.src.cracker
     {
         private static readonly int increasedMapHazardSpawnRateIndex = -1;
 
-        internal static void Evaulate(Result result)
+        private static bool dungeonCompletedGenerating = false;
+
+        internal static void EvaluatePreDunGen(Result result)
         {
+            if (result.config.verbose)
+            {
+                LethalSeedCracker3.Logger.LogInfo("level evaluate pre");
+            }
             GenerateNewFloor(result);
+        }
+
+        internal static void EvaluatePostDunGen(Result result)
+        {
+            if (result.config.verbose)
+            {
+                LethalSeedCracker3.Logger.LogInfo("level evaluate post");
+            }
+            RoundManager.Instance.FinishGeneratingLevel();
+            //RoundManager.Instance.SpawnSyncedProps();
             SpawnMapObjects(result);
+            BeginDay(result);
         }
 
         public static void GenerateNewFloor(Result result)
         {
-            result.currentDungeonType = -1;
+            dungeonCompletedGenerating = false;
+
+            RuntimeDungeon dungeonGenerator = Object.FindObjectOfType<RuntimeDungeon>(includeInactive: false);
+            int dungeonType = -1;
             if (result.config.currentLevel.dungeonFlowTypes != null && result.config.currentLevel.dungeonFlowTypes.Length != 0)
             {
                 List<int> list = [];
@@ -24,57 +46,46 @@ namespace LethalSeedCracker3.src.cracker
                     list.Add(result.config.currentLevel.dungeonFlowTypes[i].rarity);
                 }
                 int randomWeightedIndex = CrackingRoundManager.GetRandomWeightedIndex([.. list], result.crm.LevelRandom);
-                result.currentDungeonType = result.config.currentLevel.dungeonFlowTypes[randomWeightedIndex].id;
+                dungeonType = result.config.currentLevel.dungeonFlowTypes[randomWeightedIndex].id;
 
-                //TODO dungeon gen
-                //dungeonGenerator.Generator.DungeonFlow = dungeonFlowTypes[dungeonType].dungeonFlow;
-                //currentDungeonType = dungeonType;
-                //if (config.currentLevel.dungeonFlowTypes[randomWeightedIndex].overrideLevelAmbience != null)
-                //{
-                //    SoundManager.Instance.currentLevelAmbience = config.currentLevel.dungeonFlowTypes[randomWeightedIndex].overrideLevelAmbience;
-                //}
-                //else if (config.currentLevel.levelAmbienceClips != null)
-                //{
-                //    SoundManager.Instance.currentLevelAmbience = config.currentLevel.levelAmbienceClips;
-                //}
+                //dungeon gen
+                dungeonGenerator.Generator.DungeonFlow = RoundManager.Instance.dungeonFlowTypes[dungeonType].dungeonFlow;
+                result.currentDungeonType = dungeonType;
             }
             else
             {
-                //if (config.currentLevel.levelAmbienceClips != null)
-                //{
-                //    SoundManager.Instance.currentLevelAmbience = config.currentLevel.levelAmbienceClips;
-                //}
-                //currentDungeonType = 0;
+                result.currentDungeonType = 0;
             }
-            //dungeonGenerator.Generator.ShouldRandomizeSeed = false;
-            //dungeonGenerator.Generator.Seed
-            _ = result.crm.LevelRandom.Next();
-            //float num2;
-            //if (dungeonType != -1)
-            //{
-            //    num2 = config.currentLevel.factorySizeMultiplier / dungeonFlowTypes[dungeonType].MapTileSize * mapSizeMultiplier;
-            //    num2 = (float)((double)Mathf.Round(num2 * 100f) / 100.0);
-            //}
-            //else
-            //{
-            //    num2 = config.currentLevel.factorySizeMultiplier * mapSizeMultiplier;
-            //}
-            //dungeonGenerator.Generator.LengthMultiplier = num2;
-            //dungeonGenerator.Generate();
-
-            System.Random random = new(result.seed + 28);
-            int num = 7;
-            bool meteorShower;
-            result.meteorShower = meteorShower = random.Next(0, 1000) < num;
-            result.meteorShowerAtTime = -1f;
-            if (meteorShower)
+            dungeonGenerator.Generator.ShouldRandomizeSeed = false;
+            dungeonGenerator.Generator.Seed = result.crm.LevelRandom.Next();
+            float num2;
+            if (dungeonType != -1)
             {
-                result.meteorShowerAtTime = random.Next(5, 80) / 100f;
+                num2 = result.config.currentLevel.factorySizeMultiplier / RoundManager.Instance.dungeonFlowTypes[dungeonType].MapTileSize * RoundManager.Instance.mapSizeMultiplier;
+                num2 = (float)((double)Mathf.Round(num2 * 100f) / 100.0);
             }
+            else
+            {
+                num2 = result.config.currentLevel.factorySizeMultiplier * RoundManager.Instance.mapSizeMultiplier;
+            }
+            dungeonGenerator.Generator.LengthMultiplier = num2;
+            dungeonGenerator.Generator.OnGenerationStatusChanged += Generator_OnGenerationStatusChanged;
+            Cracker.curState = Cracker.STATE.CRACKING_GEN_DUNGEN;
+            dungeonGenerator.Generate();
+            if (dungeonGenerator.Generator.Status == GenerationStatus.Complete)
+            {
+                Cracker.curState = Cracker.STATE.CRACKING_POST_DUNGEN;
+            }
+        }
 
-            result.blackout = new System.Random(result.seed + 3).NextDouble() < 0.07999999821186066;
-
-            result.currentCompanyMood = TimeOfDay.Instance.CommonCompanyMoods[new System.Random(result.seed + 164).Next(0, TimeOfDay.Instance.CommonCompanyMoods.Length)];
+        private static void Generator_OnGenerationStatusChanged(DungeonGenerator generator, GenerationStatus status)
+        {
+            if (status == GenerationStatus.Complete && !dungeonCompletedGenerating)
+            {
+                dungeonCompletedGenerating = true;
+                Cracker.curState = Cracker.STATE.CRACKING_POST_DUNGEN;
+            }
+            generator.OnGenerationStatusChanged -= Generator_OnGenerationStatusChanged;
         }
 
         public static void SpawnMapObjects(Result result)
@@ -116,6 +127,24 @@ namespace LethalSeedCracker3.src.cracker
                 }
             }
             result.traps = ret;
+        }
+
+        private static void BeginDay(Result result)
+        {
+            //meteors
+            System.Random random = new(result.seed + 28);
+            int num = 7;
+            bool meteorShower;
+            result.meteorShower = meteorShower = random.Next(0, 1000) < num;
+            result.meteorShowerAtTime = -1f;
+            if (meteorShower)
+            {
+                result.meteorShowerAtTime = random.Next(5, 80) / 100f;
+            }
+
+            result.blackout = new System.Random(result.seed + 3).NextDouble() < 0.07999999821186066;
+
+            result.currentCompanyMood = TimeOfDay.Instance.CommonCompanyMoods[new System.Random(result.seed + 164).Next(0, TimeOfDay.Instance.CommonCompanyMoods.Length)];
         }
     }
 }

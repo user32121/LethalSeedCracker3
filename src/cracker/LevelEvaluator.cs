@@ -27,7 +27,7 @@ namespace LethalSeedCracker3.src.cracker
                 LethalSeedCracker3.Logger.LogInfo("level evaluate post");
             }
             RoundManager.Instance.FinishGeneratingLevel();
-            //RoundManager.Instance.SpawnSyncedProps();
+            RoundManager.Instance.SpawnSyncedProps();
             SpawnMapObjects(result);
             BeginDay(result);
         }

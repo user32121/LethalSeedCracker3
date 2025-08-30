@@ -1,7 +1,6 @@
 ﻿using LethalSeedCracker3.src.config;
 using System.Collections.Generic;
 using UnityEngine;
-using UnityEngine.AI;
 
 namespace LethalSeedCracker3.src.cracker
 {
@@ -22,6 +21,7 @@ namespace LethalSeedCracker3.src.cracker
         private static float currentOutsideEnemyPower;
         private static float currentEnemyPower;
 
+        //TODO evaluate nest spawning
         internal static void Evaluate(Result result)
         {
             if (result.config.verbose)
@@ -195,8 +195,8 @@ namespace LethalSeedCracker3.src.cracker
                 }
                 currentDaytimeEnemyPower += result.config.currentLevel.DaytimeEnemies[randomWeightedIndex].enemyType.PowerLevel;
                 Vector3 position = spawnPoints[result.crm.AnomalyRandom.Next(0, spawnPoints.Length)].transform.position;
-                position = GetRandomNavMeshPositionInBoxPredictable(position, 10f, result.crm.EnemySpawnRandom, GetLayermaskForEnemySizeLimit(enemyType2));
-                _ = PositionWithDenialPointsChecked(result, position, spawnPoints, enemyType2);
+                position = CrackingRoundManager.GetRandomNavMeshPositionInBoxPredictable(position, 10f, result.crm.EnemySpawnRandom, CrackingRoundManager.GetLayermaskForEnemySizeLimit(enemyType2));
+                _ = CrackingRoundManager.PositionWithDenialPointsChecked(result, position, spawnPoints, enemyType2);
                 //GameObject gameObject = Object.Instantiate(enemyType2.enemyPrefab, position, Quaternion.Euler(Vector3.zero));
                 //gameObject.gameObject.GetComponentInChildren<NetworkObject>().Spawn(destroyWithScene: true);
                 //SpawnedEnemies.Add(gameObject.GetComponent<EnemyAI>());
@@ -206,79 +206,6 @@ namespace LethalSeedCracker3.src.cracker
                 result.enemyCounts[enemyType2] = count;
             }
             return res;
-        }
-
-        public static int GetLayermaskForEnemySizeLimit(EnemyType enemyType)
-        {
-            if (enemyType.SizeLimit == NavSizeLimit.MediumSpaces)
-            {
-                return -97;
-            }
-            if (enemyType.SizeLimit == NavSizeLimit.SmallSpaces)
-            {
-                return -33;
-            }
-            return -1;
-        }
-
-        public static Vector3 GetRandomNavMeshPositionInBoxPredictable(Vector3 pos, float radius, System.Random randomSeed, int layerMask = -1, float verticalScale = 1f)
-        {
-            float y = pos.y;
-            float x = RandomNumberInRadius(radius, randomSeed);
-            float y2 = RandomNumberInRadius(radius * verticalScale, randomSeed);
-            float z = RandomNumberInRadius(radius, randomSeed);
-            Vector3 vector = new Vector3(x, y2, z) + pos;
-            vector.y = y;
-            float num = Vector3.Distance(pos, vector);
-            if (NavMesh.SamplePosition(vector, out NavMeshHit navHit, num + 2f, layerMask))
-            {
-                return navHit.position;
-            }
-            return pos;
-        }
-
-        public static void GetRandomNavMeshPositionInBoxPredictable(System.Random randomSeed, float radius = 10f, float verticalScale = 1f)
-        {
-            _ = RandomNumberInRadius(radius, randomSeed);
-            _ = RandomNumberInRadius(radius * verticalScale, randomSeed);
-            _ = RandomNumberInRadius(radius, randomSeed);
-        }
-
-        private static float RandomNumberInRadius(float radius, System.Random randomSeed)
-        {
-            return ((float)randomSeed.NextDouble() - 0.5f) * radius;
-        }
-
-        private static Vector3 PositionWithDenialPointsChecked(Result result, Vector3 spawnPosition, GameObject[] spawnPoints, EnemyType enemyType, float distanceFromShip = -1f)
-        {
-            if (spawnPoints.Length == 0)
-            {
-                Debug.LogError("Spawn points array was null in denial points check function!");
-                return spawnPosition;
-            }
-            GameObject[] spawnDenialPoints = GameObject.FindGameObjectsWithTag("SpawnDenialPoint");
-            int num = 0;
-            bool flag = false;
-            for (int i = 0; i < spawnPoints.Length - 1; i++)
-            {
-                for (int j = 0; j < spawnDenialPoints.Length; j++)
-                {
-                    flag = true;
-                    if (Vector3.Distance(spawnPosition, spawnDenialPoints[j].transform.position) < 16f || (distanceFromShip != -1f && Vector3.Distance(spawnPosition, StartOfRound.Instance.shipLandingPosition.transform.position) < distanceFromShip))
-                    {
-                        num = (num + 1) % spawnPoints.Length;
-                        spawnPosition = spawnPoints[num].transform.position;
-                        spawnPosition = GetRandomNavMeshPositionInBoxPredictable(spawnPosition, 10f, result.crm.AnomalyRandom, GetLayermaskForEnemySizeLimit(enemyType));
-                        flag = false;
-                        break;
-                    }
-                }
-                if (flag)
-                {
-                    break;
-                }
-            }
-            return spawnPosition;
         }
 
         public static void SpawnEnemiesOutside(Result result)
@@ -331,24 +258,23 @@ namespace LethalSeedCracker3.src.cracker
             bool res = false;
             int randomWeightedIndex = CrackingRoundManager.GetRandomWeightedIndex([.. SpawnProbabilities], result.crm.OutsideEnemySpawnRandom);
             EnemyType enemyType2 = result.config.currentLevel.OutsideEnemies[randomWeightedIndex].enemyType;
-            //TODO world awareness
-            //if (enemyType2.requireNestObjectsToSpawn)
-            //{
-            //    bool flag = false;
-            //    EnemyAINestSpawnObject[] array = Object.FindObjectsByType<EnemyAINestSpawnObject>(FindObjectsSortMode.None);
-            //    for (int j = 0; j < array.Length; j++)
-            //    {
-            //        if (array[j].enemyType == enemyType2)
-            //        {
-            //            flag = true;
-            //            break;
-            //        }
-            //    }
-            //    if (!flag)
-            //    {
-            //        return false;
-            //    }
-            //}
+            if (enemyType2.requireNestObjectsToSpawn)
+            {
+                bool flag = false;
+                EnemyAINestSpawnObject[] array = Object.FindObjectsByType<EnemyAINestSpawnObject>(FindObjectsSortMode.None);
+                for (int j = 0; j < array.Length; j++)
+                {
+                    if (array[j].enemyType == enemyType2)
+                    {
+                        flag = true;
+                        break;
+                    }
+                }
+                if (!flag)
+                {
+                    return false;
+                }
+            }
             float num4 = Mathf.Max(enemyType2.spawnInGroupsOf, 1);
             for (int k = 0; k < num4; k++)
             {
@@ -358,8 +284,8 @@ namespace LethalSeedCracker3.src.cracker
                 }
                 currentOutsideEnemyPower += result.config.currentLevel.OutsideEnemies[randomWeightedIndex].enemyType.PowerLevel;
                 Vector3 position = spawnPoints[result.crm.AnomalyRandom.Next(0, spawnPoints.Length)].transform.position;
-                position = GetRandomNavMeshPositionInBoxPredictable(position, 10f, result.crm.AnomalyRandom, GetLayermaskForEnemySizeLimit(enemyType2));
-                _ = PositionWithDenialPointsChecked(result, position, spawnPoints, enemyType2);
+                position = CrackingRoundManager.GetRandomNavMeshPositionInBoxPredictable(position, 10f, result.crm.AnomalyRandom, CrackingRoundManager.GetLayermaskForEnemySizeLimit(enemyType2));
+                _ = CrackingRoundManager.PositionWithDenialPointsChecked(result, position, spawnPoints, enemyType2);
                 //GameObject gameObject = Object.Instantiate(enemyType2.enemyPrefab, position, Quaternion.Euler(Vector3.zero));
                 //gameObject.gameObject.GetComponentInChildren<NetworkObject>().Spawn(destroyWithScene: true);
                 //SpawnedEnemies.Add(gameObject.GetComponent<EnemyAI>());

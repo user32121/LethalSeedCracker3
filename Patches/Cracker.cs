@@ -70,7 +70,7 @@ namespace LethalSeedCracker3.Patches
 
         private static void ContinueCrackingPreDunGen()
         {
-            if (curSeed % 1000 == 0)
+            if (curSeed % 10 == 0)
             {
                 LethalSeedCracker3.Logger.LogInfo($"seed {curSeed}/{config.max_seed}");
             }
@@ -83,6 +83,7 @@ namespace LethalSeedCracker3.Patches
             curResult = Util.NonNull(curResult, nameof(curResult));
             LevelEvaluator.EvaluatePostDunGen(curResult);
             ScrapEvaluator.Evaluate(curResult);
+            LevelEvaluator.EvaluatePostScrap(curResult);
             EnemyEvaluator.Evaluate(curResult);
             WeatherEvaluator.Evaluate(curResult);
             FrozenResult fr = new(curResult);

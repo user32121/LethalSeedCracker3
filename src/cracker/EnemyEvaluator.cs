@@ -197,9 +197,6 @@ namespace LethalSeedCracker3.src.cracker
                 Vector3 position = spawnPoints[result.crm.AnomalyRandom.Next(0, spawnPoints.Length)].transform.position;
                 position = CrackingRoundManager.GetRandomNavMeshPositionInBoxPredictable(position, 10f, result.crm.EnemySpawnRandom, CrackingRoundManager.GetLayermaskForEnemySizeLimit(enemyType2));
                 _ = CrackingRoundManager.PositionWithDenialPointsChecked(result, position, spawnPoints, enemyType2);
-                //GameObject gameObject = Object.Instantiate(enemyType2.enemyPrefab, position, Quaternion.Euler(Vector3.zero));
-                //gameObject.gameObject.GetComponentInChildren<NetworkObject>().Spawn(destroyWithScene: true);
-                //SpawnedEnemies.Add(gameObject.GetComponent<EnemyAI>());
                 enemyType2.numberSpawned++;
                 res = true;
                 int count = result.enemyCounts.GetValueOrDefault(enemyType2, 0) + 1;
@@ -286,9 +283,6 @@ namespace LethalSeedCracker3.src.cracker
                 Vector3 position = spawnPoints[result.crm.AnomalyRandom.Next(0, spawnPoints.Length)].transform.position;
                 position = CrackingRoundManager.GetRandomNavMeshPositionInBoxPredictable(position, 10f, result.crm.AnomalyRandom, CrackingRoundManager.GetLayermaskForEnemySizeLimit(enemyType2));
                 _ = CrackingRoundManager.PositionWithDenialPointsChecked(result, position, spawnPoints, enemyType2);
-                //GameObject gameObject = Object.Instantiate(enemyType2.enemyPrefab, position, Quaternion.Euler(Vector3.zero));
-                //gameObject.gameObject.GetComponentInChildren<NetworkObject>().Spawn(destroyWithScene: true);
-                //SpawnedEnemies.Add(gameObject.GetComponent<EnemyAI>());
                 enemyType2.numberSpawned++;
                 res = true;
                 int count = result.enemyCounts.GetValueOrDefault(enemyType2, 0) + 1;

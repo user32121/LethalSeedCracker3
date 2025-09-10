@@ -1,7 +1,4 @@
-﻿using DunGen;
-using LethalSeedCracker3.Patches;
-using System.Collections.Generic;
-using System.Linq;
+﻿using System.Collections.Generic;
 using UnityEngine;
 
 namespace LethalSeedCracker3.src.cracker
@@ -9,8 +6,6 @@ namespace LethalSeedCracker3.src.cracker
     internal class LevelEvaluator
     {
         private static readonly int increasedMapHazardSpawnRateIndex = -1;
-
-        private static bool dungeonCompletedGenerating = false;
 
         internal static void EvaluatePreDunGen(Result result)
         {
@@ -27,23 +22,17 @@ namespace LethalSeedCracker3.src.cracker
             {
                 LethalSeedCracker3.Logger.LogInfo("level evaluate post");
             }
-            RoundManager.Instance.FinishGeneratingLevel();
-            RoundManager.Instance.SpawnSyncedProps();
             SpawnMapObjects(result);
             BeginDay(result);
         }
 
         internal static void EvaluatePostScrap(Result result)
         {
-            Vector3 mainEntrancePosition = RoundManager.FindMainEntrancePosition();
-            SetLockedDoors(mainEntrancePosition, result);
+            SetLockedDoors(result);
         }
 
         public static void GenerateNewFloor(Result result)
         {
-            dungeonCompletedGenerating = false;
-
-            RuntimeDungeon dungeonGenerator = Object.FindObjectOfType<RuntimeDungeon>(includeInactive: false);
             int dungeonType = -1;
             if (result.config.currentLevel.dungeonFlowTypes != null && result.config.currentLevel.dungeonFlowTypes.Length != 0)
             {
@@ -55,16 +44,13 @@ namespace LethalSeedCracker3.src.cracker
                 int randomWeightedIndex = CrackingRoundManager.GetRandomWeightedIndex([.. list], result.crm.LevelRandom);
                 dungeonType = result.config.currentLevel.dungeonFlowTypes[randomWeightedIndex].id;
 
-                //dungeon gen
-                dungeonGenerator.Generator.DungeonFlow = RoundManager.Instance.dungeonFlowTypes[dungeonType].dungeonFlow;
                 result.currentDungeonType = dungeonType;
             }
             else
             {
                 result.currentDungeonType = 0;
             }
-            dungeonGenerator.Generator.ShouldRandomizeSeed = false;
-            dungeonGenerator.Generator.Seed = result.crm.LevelRandom.Next();
+            _ = result.crm.LevelRandom.Next();
             float num2;
             if (dungeonType != -1)
             {
@@ -75,24 +61,7 @@ namespace LethalSeedCracker3.src.cracker
             {
                 num2 = result.config.currentLevel.factorySizeMultiplier * RoundManager.Instance.mapSizeMultiplier;
             }
-            dungeonGenerator.Generator.LengthMultiplier = num2;
-            dungeonGenerator.Generator.OnGenerationStatusChanged += Generator_OnGenerationStatusChanged;
-            Cracker.curState = Cracker.STATE.CRACKING_GEN_DUNGEN;
-            dungeonGenerator.Generate();
-            if (dungeonGenerator.Generator.Status == GenerationStatus.Complete)
-            {
-                Cracker.curState = Cracker.STATE.CRACKING_POST_DUNGEN;
-            }
-        }
-
-        private static void Generator_OnGenerationStatusChanged(DungeonGenerator generator, GenerationStatus status)
-        {
-            if (status == GenerationStatus.Complete && !dungeonCompletedGenerating)
-            {
-                dungeonCompletedGenerating = true;
-                Cracker.curState = Cracker.STATE.CRACKING_POST_DUNGEN;
-            }
-            generator.OnGenerationStatusChanged -= Generator_OnGenerationStatusChanged;
+            _ = num2;
         }
 
         public static void SpawnMapObjects(Result result)
@@ -102,7 +71,6 @@ namespace LethalSeedCracker3.src.cracker
                 return;
             }
             System.Random random = new(StartOfRound.Instance.randomMapSeed + 587);
-            GameObject mapPropsContainer = GameObject.FindGameObjectWithTag("MapPropsContainer");
             RandomMapObject[] array = Object.FindObjectsOfType<RandomMapObject>();
             EntranceTeleport[] array2 = Object.FindObjectsByType<EntranceTeleport>(FindObjectsSortMode.None);
             List<Vector3> list = [];
@@ -128,7 +96,7 @@ namespace LethalSeedCracker3.src.cracker
                 }
                 if (list2.Count == 0)
                 {
-                    Debug.Log("NO SPAWNERS WERE COMPATIBLE WITH THE SPAWNABLE MAP OBJECT: '" + result.config.currentLevel.spawnableMapObjects[i].prefabToSpawn.gameObject.name + "'");
+                    //Debug.Log("NO SPAWNERS WERE COMPATIBLE WITH THE SPAWNABLE MAP OBJECT: '" + result.config.currentLevel.spawnableMapObjects[i].prefabToSpawn.gameObject.name + "'");
                     continue;
                 }
                 list.Clear();
@@ -164,30 +132,16 @@ namespace LethalSeedCracker3.src.cracker
                             continue;
                         }
                     }
-                    //GameObject gameObject = Object.Instantiate(result.config.currentLevel.spawnableMapObjects[i].prefabToSpawn, position, Quaternion.identity, mapPropsContainer.transform);
                     if (result.config.currentLevel.spawnableMapObjects[i].spawnFacingAwayFromWall)
                     {
-                        //gameObject.transform.eulerAngles = new Vector3(0f, CrackingRoundManager.YRotationThatFacesTheFarthestFromPosition(position + Vector3.up * 0.2f), 0f);
                     }
                     else if (result.config.currentLevel.spawnableMapObjects[i].spawnFacingWall)
                     {
-                        //gameObject.transform.eulerAngles = new Vector3(0f, CrackingRoundManager.YRotationThatFacesTheNearestFromPosition(position + Vector3.up * 0.2f), 0f);
                     }
                     else
                     {
-                        //gameObject.transform.eulerAngles = new Vector3(gameObject.transform.eulerAngles.x, random.Next(0, 360), gameObject.transform.eulerAngles.z);
                         _ = random.Next(0, 360);
                     }
-                    //if (result.config.currentLevel.spawnableMapObjects[i].spawnWithBackToWall && Physics.Raycast(gameObject.transform.position, -gameObject.transform.forward, out var hitInfo, 100f, StartOfRound.Instance.collidersAndRoomMaskAndDefault, QueryTriggerInteraction.Ignore))
-                    //{
-                    //    gameObject.transform.position = hitInfo.point;
-                    //    if (result.config.currentLevel.spawnableMapObjects[i].spawnWithBackFlushAgainstWall)
-                    //    {
-                    //        gameObject.transform.forward = hitInfo.normal;
-                    //        gameObject.transform.eulerAngles = new Vector3(0f, gameObject.transform.eulerAngles.y, 0f);
-                    //    }
-                    //}
-                    //gameObject.GetComponent<NetworkObject>().Spawn(destroyWithScene: true);
                 }
             }
             for (int n = 0; n < array.Length; n++)
@@ -215,53 +169,26 @@ namespace LethalSeedCracker3.src.cracker
             result.currentCompanyMood = TimeOfDay.Instance.CommonCompanyMoods[new System.Random(result.seed + 164).Next(0, TimeOfDay.Instance.CommonCompanyMoods.Length)];
         }
 
-        private static void SetLockedDoors(Vector3 mainEntrancePosition, Result result)
+        private static void SetLockedDoors(Result result)
         {
-            if (mainEntrancePosition == Vector3.zero)
-            {
-                Debug.Log("Main entrance teleport was not spawned on local client within 12 seconds. Locking doors based on origin instead.");
-            }
-            List<DoorLock> list = Object.FindObjectsOfType<DoorLock>().ToList();
-            for (int num = list.Count - 1; num >= 0; num--)
-            {
-                //not accessible by visual studio for some reason; workaround is to use reflection
-                bool canBeLocked = (bool)typeof(DoorLock).GetField("canBeLocked").GetValue(list[num]);
-                if (list[num].transform.position.y > -160f || !canBeLocked)
-                {
-                    list.RemoveAt(num);
-                }
-            }
-            list = list.OrderByDescending((DoorLock x) => (mainEntrancePosition - x.transform.position).sqrMagnitude).ToList();
             float num2 = 1.1f;
-            int num3 = 0;
-            for (int num4 = 0; num4 < list.Count; num4++)
+            int numLockedDoors = 0;
+            for (int num4 = 0; num4 < 100; num4++)
             {
                 if (result.crm.LevelRandom.NextDouble() < (double)num2)
                 {
                     float timeToLockPick = Mathf.Clamp(result.crm.LevelRandom.Next(2, 90), 2f, 32f);
-                    //list[num4].LockDoor(timeToLockPick);
-                    num3++;
+                    _ = timeToLockPick;
+                    numLockedDoors++;
                 }
                 num2 /= 1.55f;
             }
-            GameObject[] array;
-            int maxValue;
-            GameObject[] insideAINodes = GameObject.FindGameObjectsWithTag("AINode");
-            if (result.currentDungeonType != 4)
+            //instantiate keys
+            for (int i = 0; i < numLockedDoors; i++)
             {
-                array = insideAINodes;
-                maxValue = insideAINodes.Length;
-            }
-            else
-            {
-                array = insideAINodes.OrderBy((GameObject x) => Vector3.Distance(x.transform.position, mainEntrancePosition)).ToArray();
-                maxValue = array.Length / 3;
-            }
-            for (int num5 = 0; num5 < num3; num5++)
-            {
-                int num6 = result.crm.AnomalyRandom.Next(0, maxValue);
-                Vector3 randomNavMeshPositionInBoxPredictable = CrackingRoundManager.GetRandomNavMeshPositionInBoxPredictable(array[num6].transform.position, 8f, result.crm.AnomalyRandom);
-                //Object.Instantiate(keyPrefab, randomNavMeshPositionInBoxPredictable, Quaternion.identity, spawnedScrapContainer).GetComponent<NetworkObject>().Spawn();
+                _ = result.crm.AnomalyRandom.Next();
+                Vector3 randomNavMeshPositionInBoxPredictable = CrackingRoundManager.GetRandomNavMeshPositionInBoxPredictable(Vector3.zero, 8f, result.crm.AnomalyRandom);
+                _ = randomNavMeshPositionInBoxPredictable;
             }
         }
     }

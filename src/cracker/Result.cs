@@ -1,5 +1,4 @@
-﻿using DunGen;
-using LethalSeedCracker3.src.common;
+﻿using LethalSeedCracker3.src.common;
 using LethalSeedCracker3.src.config;
 using System;
 using System.Collections.Generic;
@@ -34,10 +33,6 @@ namespace LethalSeedCracker3.src.cracker
 
         internal void Cleanup()
         {
-            RuntimeDungeon dungeonGenerator = UnityEngine.Object.FindObjectOfType<RuntimeDungeon>(includeInactive: false);
-            dungeonGenerator.Generator.Clear(true);
-            RoundManager.Instance.UnloadSceneObjectsEarly();
-            RoundManager.Instance.DespawnPropsAtEndOfRound();
         }
     }
 

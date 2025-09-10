@@ -1,5 +1,4 @@
 ﻿using HarmonyLib;
-using LethalSeedCracker3.src.common;
 using LethalSeedCracker3.src.config;
 using LethalSeedCracker3.src.cracker;
 using UnityEngine.SceneManagement;
@@ -16,19 +15,14 @@ namespace LethalSeedCracker3.Patches
             NONE,
             LOAD_SCENE,
             LOADED_SCENE,
-            CRACKING_PRE_DUNGEN,
-            CRACKING_GEN_DUNGEN,
-            CRACKING_POST_DUNGEN,
-            DONE_CRACKING,
+            CRACKING,
         };
         internal static STATE curState;
         private static int seedsFound = 0;
-        private static int curSeed;
-        private static Result? curResult;
 
         [HarmonyPatch("Update")]
         [HarmonyPrefix]
-        private static void UpdatePostfix()
+        private static void UpdatePrefix()
         {
             switch (curState)
             {
@@ -40,18 +34,10 @@ namespace LethalSeedCracker3.Patches
                 case STATE.LOAD_SCENE:
                     break;
                 case STATE.LOADED_SCENE:
+                    curState = STATE.CRACKING;
                     StartCracking();
-                    curState = STATE.CRACKING_PRE_DUNGEN;
                     break;
-                case STATE.CRACKING_PRE_DUNGEN:
-                    ContinueCrackingPreDunGen();
-                    break;
-                case STATE.CRACKING_GEN_DUNGEN:
-                    break;
-                case STATE.CRACKING_POST_DUNGEN:
-                    ContinueCrackingPostDunGen();
-                    break;
-                case STATE.DONE_CRACKING:
+                case STATE.CRACKING:
                     break;
                 default:
                     throw new System.Exception($"Not implemented state: {curState}");
@@ -65,45 +51,29 @@ namespace LethalSeedCracker3.Patches
 
         private static void StartCracking()
         {
-            curSeed = config.min_seed;
-        }
-
-        private static void ContinueCrackingPreDunGen()
-        {
-            if (curSeed % 10 == 0)
+            for (int curSeed = config.min_seed; curSeed <= config.max_seed; ++curSeed)
             {
-                LethalSeedCracker3.Logger.LogInfo($"seed {curSeed}/{config.max_seed}");
+                if (curSeed % 1000 == 0)
+                {
+                    LethalSeedCracker3.Logger.LogInfo($"seed {curSeed}/{config.max_seed}");
+                }
+                Result curResult = new(curSeed, config);
+                LevelEvaluator.EvaluatePreDunGen(curResult);
+                LevelEvaluator.EvaluatePostDunGen(curResult);
+                ScrapEvaluator.Evaluate(curResult);
+                LevelEvaluator.EvaluatePostScrap(curResult);
+                EnemyEvaluator.Evaluate(curResult);
+                WeatherEvaluator.Evaluate(curResult);
+                FrozenResult fr = new(curResult);
+                if (config.Filter(fr))
+                {
+                    LethalSeedCracker3.Logger.LogInfo(fr.ToFormattedString("\n  ", ", "));
+                    fr.Save("results3.txt", "seeds3.txt", seedsFound > 0);
+                    ++seedsFound;
+                }
+                curResult.Cleanup();
             }
-            curResult = new(curSeed, config);
-            LevelEvaluator.EvaluatePreDunGen(curResult);
-        }
-
-        private static void ContinueCrackingPostDunGen()
-        {
-            curResult = Util.NonNull(curResult, nameof(curResult));
-            LevelEvaluator.EvaluatePostDunGen(curResult);
-            ScrapEvaluator.Evaluate(curResult);
-            LevelEvaluator.EvaluatePostScrap(curResult);
-            EnemyEvaluator.Evaluate(curResult);
-            WeatherEvaluator.Evaluate(curResult);
-            FrozenResult fr = new(curResult);
-            if (config.Filter(fr))
-            {
-                LethalSeedCracker3.Logger.LogInfo(fr.ToFormattedString("\n  ", ", "));
-                fr.Save("results3.txt", "seeds3.txt", seedsFound > 0);
-                ++seedsFound;
-            }
-            curResult.Cleanup();
-            ++curSeed;
-            if (curSeed >= config.max_seed)
-            {
-                LethalSeedCracker3.Logger.LogInfo($"Found {seedsFound} seeds");
-                curState = STATE.DONE_CRACKING;
-            }
-            else
-            {
-                curState = STATE.CRACKING_PRE_DUNGEN;
-            }
+            LethalSeedCracker3.Logger.LogInfo($"Found {seedsFound} seeds");
         }
     }
 }

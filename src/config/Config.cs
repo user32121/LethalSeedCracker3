@@ -80,6 +80,7 @@ namespace LethalSeedCracker3.src.config
                 return true;
             }),
             new ConfigFilter<CompanyMood?>("companymood", ParseCompanyMood, null, "mood", (result, mood) => mood == null || mood == result.currentCompanyMood),
+            new ConfigFilter<Func<float, float, bool>?, int>("lightning", ParseComparator, null, "comparator", ParseInt, 0, "num", (result, op, num) => op == null || op(result.lightningCount, num)),
         ];
 
         //convenience name mappings

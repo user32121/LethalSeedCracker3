@@ -30,6 +30,7 @@ namespace LethalSeedCracker3.src.cracker
         //misc
         internal CompanyMood? currentCompanyMood;
         internal Dictionary<SelectableLevel, LevelWeatherType>? weathers;
+        internal int? lightningCount;
 
         internal void Cleanup()
         {
@@ -74,6 +75,7 @@ namespace LethalSeedCracker3.src.cracker
         //misc
         internal readonly CompanyMood currentCompanyMood = Util.NonNull(result.currentCompanyMood, nameof(result.currentCompanyMood));
         internal readonly Dictionary<SelectableLevel, LevelWeatherType> weathers = Util.NonNull(result.weathers, nameof(result.weathers));
+        internal readonly int lightningCount = Util.NonNull(result.lightningCount, nameof(result.lightningCount));
 
         public string ToFormattedString(string majorSeparator, string minorSeparator)
         {
@@ -82,13 +84,15 @@ namespace LethalSeedCracker3.src.cracker
             string enemyList = string.Join(min, [.. from item in enemies select $"{item.Key.name}: {item.Value}"]);
             string trapList = string.Join(min, [.. from item in traps select $"{item.Key}: {item.Value}"]);
             string scrapList = string.Join(min, [.. from item in scrapCounts select $"{item.Key.name}: {item.Value}"]);
+            string weatherList = string.Join(min, [.. from item in weathers select $"{item.Key.name}: {item.Value}"]);
             return $"seed: {seed}" +
                 $"{maj}moon: {config.currentLevel.name}{min}eclipsed: {config.eclipsed}" +
                 $"{maj}daystildeadline: {config.daysUntilDeadline}{min}dayssurvived: {config.daysPlayersSurvivedInARow}{min}players: {config.connectedPlayersAmount}{min}anniversary: {config.isAnniversary}" +
                 $"{maj}dungeon: {currentDungeonType}{min}indoorfog: {indoorFog}{min}blackout: {blackout}{min}meteorshower: {meteorShower}{min}meteorshowertime: {meteorShowerAtTime}{min}companymood: {currentCompanyMood.name}" +
                 $"{maj}infestation: {infestation?.name}{min}enemies: [{enemyList}]" +
                 $"{maj}numscrap: {numScrap}{min}singleitemday: {singleItemDay}{min}scrap: [{scrapList}]" +
-                $"{maj}traps: [{trapList}]";
+                $"{maj}traps: [{trapList}]" +
+                $"{maj}lightningcount: {lightningCount}, weather: [{weatherList}]";
         }
 
         internal void Save(string fileName, string compressedFileName, bool append)

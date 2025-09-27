@@ -112,7 +112,6 @@ namespace LethalSeedCracker3.src.cracker
                     {
                         minEnemiesToSpawn = item.weatherVariable;
                         minOutsideEnemiesToSpawn = item.weatherVariable;
-                        LethalSeedCracker3.Logger.LogInfo($"{minEnemiesToSpawn} {minOutsideEnemiesToSpawn}");
                     }
                 }
             }

@@ -11,4 +11,3 @@ This mod hijacks the normal gameplay logic, so it will most likely break if you 
 * burst valves
 * lightning count
 * nests
-* remove 2 2 log line

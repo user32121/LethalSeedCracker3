@@ -18,6 +18,7 @@ namespace LethalSeedCracker3.src.config
         internal bool eclipsed = false;
 
         private static readonly Func<Config, string, int> ParseInt = (config, s) => int.Parse(s);
+        private static readonly Func<Config, string, float> ParseFloat = (config, s) => float.Parse(s);
         private static readonly List<BaseConfigCommand> commands =
         [
             new ConfigParameter("verbose", config => config.verbose= true),
@@ -32,14 +33,53 @@ namespace LethalSeedCracker3.src.config
             new ConfigParameter("anniversary", config => config.isAnniversary = true),
             new ConfigParameter("eclipsed", config => config.eclipsed = true),
             new ConfigFilter<EnemyType?>("infestation", ParseEnemy, null, "enemy", (result, enemy) => enemy == null || enemy == result.infestation),
-            new ConfigFilters<EnemyType, Func<float, float, bool>, int>("enemy", ParseEnemy, "enemy", ParseComparator, "comparator", ParseInt, "num", (result, enemy, op, num) => {
-                for (int i = 0; i < enemy.Count; ++i) {
-                    if(!op[i](result.enemies[enemy[i]], num[i])) {
+            new ConfigFilters<EnemyType, Func<float, float, bool>, int>("enemy", ParseEnemy, "enemy", ParseComparator, "comparator", ParseInt, "num", (result, enemies, ops, nums) => {
+                for (int i = 0; i < enemies.Count; ++i) {
+                    if (!ops[i](result.enemies.GetValueOrDefault(enemies[i], 0), nums[i])) {
+                        return false;
+                    }
+                }
+                return true;
+            }, validation: CheckEnemyPower),
+            new ConfigFilter<DungeonType?>("dungeon", (config, s) => ParseEnum<DungeonType>(config, s), null, "dungeon", (result, dungeon) => dungeon == null || result.currentDungeonType == dungeon),
+            new ConfigFilter("indoorfog", (result, active) => !active || result.indoorFog),
+            new ConfigFilters<Item, Func<float, float, bool>, int>("item", ParseScrap, "scrap", ParseComparator, "comparator", ParseInt, "num", (result, scraps, ops, nums) => {
+                for (int i = 0; i < scraps.Count; ++i) {
+                    if (!ops[i](result.scrapCounts.GetValueOrDefault(scraps[i], 0), nums[i])) {
                         return false;
                     }
                 }
                 return true;
             }),
+            new ConfigFilter<Item?>("singleitemday", ParseScrap, null, "scrap", (result, scrap) => scrap == null || scrap == result.singleItemDay),
+            new ConfigFilters<LevelWeatherType,SelectableLevel>("weather", ParseEnum<LevelWeatherType>, "weather", ParseMoon, "moon", (result, weathers, moons) => {
+                for (int i = 0; i < weathers.Count; ++i) {
+                    if (result.weathers.GetValueOrDefault(moons[i], LevelWeatherType.None) != weathers[i]) {
+                        return false;
+                    }
+                }
+                return true;
+            }),
+            new ConfigFilters<SelectableLevel>("anyweather", ParseMoon, "moon", (result, moons) => {
+                for (int i = 0; i < moons.Count; ++i) {
+                    if (!result.weathers.ContainsKey(moons[i])) {
+                        return false;
+                    }
+                }
+                return true;
+            }),
+            new ConfigFilter("meteor", (result, active) => !active || result.meteorShower),
+            new ConfigFilter<Func<float, float, bool>?, float>("meteortime", ParseComparator, null, "comparator", ParseFloat, 0, "time", (result, op, time) => op == null || op(result.meteorShowerAtTime, time)),
+            new ConfigFilter("blackout", (result, active) => !active || result.blackout),
+            new ConfigFilters<string, Func<float, float, bool>, int>("trap", ParseTrap, "trap", ParseComparator, "comparator", ParseInt, "num", (result, traps, ops, nums) => {
+                for (int i = 0; i < traps.Count; ++i) {
+                    if (!ops[i](result.traps.GetValueOrDefault(traps[i], 0), nums[i])) {
+                        return false;
+                    }
+                }
+                return true;
+            }),
+            new ConfigFilter<CompanyMood?>("companymood", ParseCompanyMood, null, "mood", (result, mood) => mood == null || mood == result.currentCompanyMood),
         ];
 
         //convenience name mappings
@@ -220,6 +260,49 @@ namespace LethalSeedCracker3.src.config
             return comparators[op];
         }
 
+        private static T ParseEnum<T>(Config _, string name) where T : Enum
+        {
+            foreach (var item in (T[])Enum.GetValues(typeof(T)))
+            {
+                if (IContains(item.ToString(), name))
+                {
+                    return item;
+                }
+            }
+            PrintEnums<T>();
+            throw new Exception($"Unrecognized {typeof(T).Name}: {name}");
+        }
+
+        private static CompanyMood ParseCompanyMood(Config _, string name)
+        {
+            foreach (var item in TimeOfDay.Instance.CommonCompanyMoods)
+            {
+                if (IContains(item.name, name))
+                {
+                    return item;
+                }
+            }
+            PrintCompanyMoods();
+            throw new Exception($"Unrecognized company mood: {name}");
+        }
+
+        private static string ParseTrap(Config config, string name)
+        {
+            if (config.currentLevel is null)
+            {
+                throw new Exception("Set a moon before configuring traps.");
+            }
+            foreach (var item in config.currentLevel.spawnableMapObjects)
+            {
+                if (IContains(item.prefabToSpawn.name, name))
+                {
+                    return item.prefabToSpawn.name;
+                }
+            }
+            PrintTraps(config);
+            throw new Exception($"Unrecognized trap: {name}");
+        }
+
         private static void PrintCommands()
         {
             LethalSeedCracker3.Logger.LogInfo("Commands:");
@@ -278,6 +361,127 @@ namespace LethalSeedCracker3.src.config
             foreach (var item in comparators)
             {
                 LethalSeedCracker3.Logger.LogInfo($"  {item.Key}");
+            }
+        }
+
+        private static void PrintEnums<T>() where T : Enum
+        {
+            LethalSeedCracker3.Logger.LogInfo($"{typeof(T).Name}s:");
+            foreach (var item in (T[])Enum.GetValues(typeof(T)))
+            {
+                LethalSeedCracker3.Logger.LogInfo($"  {item}");
+            }
+        }
+
+        private static void PrintCompanyMoods()
+        {
+            LethalSeedCracker3.Logger.LogInfo("Company moods:");
+            foreach (var item in TimeOfDay.Instance.CommonCompanyMoods)
+            {
+                LethalSeedCracker3.Logger.LogInfo($"{item}: timeToWaitBeforeGrabbingItem: {item.timeToWaitBeforeGrabbingItem}, irritability: {item.irritability}, judgementSpeed: {item.judgementSpeed}, startingPatience: {item.startingPatience}, mustBeWokenUp: {item.mustBeWokenUp}, maximumItemsToAnger: {item.maximumItemsToAnger}, sensitivity: {item.sensitivity}, manifestation: {item.manifestation}");
+            }
+        }
+
+        private static void PrintTraps(Config config)
+        {
+            LethalSeedCracker3.Logger.LogInfo("Trap:");
+            foreach (var item in config.currentLevel.spawnableScrap)
+            {
+                LethalSeedCracker3.Logger.LogInfo($"{item.spawnableItem.name}, {item.spawnableItem.itemName}");
+            }
+        }
+
+        //Find the smallest int that satisfies f
+        private static int MinNum(Func<float, bool> f)
+        {
+            if (f(0))
+            {
+                return 0;
+            }
+            int l = 0;
+            int r = 1;
+            while (!f(r))
+            {
+                l = r;
+                r *= 2;
+            }
+            while (l < r)
+            {
+                int m = (l + r) / 2;
+                if (f(m))
+                {
+                    r = m - 1;
+                }
+                else
+                {
+                    l = m + 1;
+                }
+            }
+            if (f(l))
+            {
+                return l;
+            }
+            else
+            {
+                return l - 1;
+            }
+        }
+
+        private static void CheckEnemyPower(Config config, List<EnemyType> enemies, List<Func<float, float, bool>> ops, List<int> nums)
+        {
+            if (config.currentLevel is null)
+            {
+                throw new Exception("Set a moon before checking enemies.");
+            }
+            float insidePower = 0;
+            float outsidePower = 0;
+            float daytimePower = 0;
+
+            for (int i = 0; i < enemies.Count; i++)
+            {
+                int count = MinNum(x => ops[i](x, nums[i]));
+                EnemyType enemy = enemies[i];
+                if (count > enemy.MaxCount)
+                {
+                    throw new Exception($"Requested at least {count} {enemy.name}, but {enemy.MaxCount} is the maximum.");
+                }
+
+                foreach (var item in config.currentLevel.Enemies)
+                {
+                    if (item.enemyType == enemy)
+                    {
+                        insidePower += item.enemyType.PowerLevel * count;
+                    }
+                }
+                foreach (var item in config.currentLevel.OutsideEnemies)
+                {
+                    if (item.enemyType == enemy)
+                    {
+                        outsidePower += item.enemyType.PowerLevel * count;
+                    }
+                }
+                foreach (var item in config.currentLevel.DaytimeEnemies)
+                {
+                    if (item.enemyType == enemy)
+                    {
+                        daytimePower += item.enemyType.PowerLevel * count;
+                    }
+                }
+            }
+            float maxInsidePower = 30f;
+            float maxOutsidePower = config.currentLevel.maxOutsideEnemyPowerCount;
+            float maxDaytimePower = config.currentLevel.maxDaytimeEnemyPowerCount;
+            if (insidePower > maxInsidePower)
+            {
+                throw new Exception($"Inside power required ({insidePower}) exceeds max possible limit ({maxInsidePower}).");
+            }
+            if (outsidePower > maxOutsidePower)
+            {
+                throw new Exception($"Outside power required ({outsidePower}) exceeds max possible limit ({maxOutsidePower}).");
+            }
+            if (daytimePower > maxDaytimePower)
+            {
+                throw new Exception($"Daytime power required ({daytimePower}) exceeds max possible limit ({maxDaytimePower}).");
             }
         }
     }

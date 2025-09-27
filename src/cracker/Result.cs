@@ -36,6 +36,14 @@ namespace LethalSeedCracker3.src.cracker
         }
     }
 
+    enum DungeonType
+    {
+        NONE,
+        FACTORY,
+        MANSION,
+        MINESHAFT,
+    }
+
     internal class FrozenResult(Result result)
     {
         internal readonly int seed = result.seed;
@@ -45,7 +53,16 @@ namespace LethalSeedCracker3.src.cracker
         internal readonly Dictionary<EnemyType, int> enemies = result.enemyCounts;
         //level
         internal readonly bool indoorFog = Util.NonNull(result.indoorFog, nameof(result.indoorFog));
-        internal readonly int currentDungeonType = Util.NonNull(result.currentDungeonType, nameof(result.currentDungeonType));
+        internal readonly DungeonType currentDungeonType = Util.NonNull(result.currentDungeonType, nameof(result.currentDungeonType)) switch
+        {
+            -1 => DungeonType.NONE,
+            0 => DungeonType.FACTORY,
+            1 => DungeonType.MANSION,
+            2 => DungeonType.FACTORY,
+            3 => DungeonType.FACTORY,
+            4 => DungeonType.MINESHAFT,
+            _ => throw new NotImplementedException($"dungeon type: {result.currentDungeonType}")
+        };
         internal readonly bool meteorShower = Util.NonNull(result.meteorShower, nameof(result.meteorShower));
         internal readonly float meteorShowerAtTime = Util.NonNull(result.meteorShowerAtTime, nameof(result.meteorShowerAtTime));
         internal readonly bool blackout = Util.NonNull(result.blackout, nameof(result.blackout));
@@ -65,20 +82,10 @@ namespace LethalSeedCracker3.src.cracker
             string enemyList = string.Join(min, [.. from item in enemies select $"{item.Key.name}: {item.Value}"]);
             string trapList = string.Join(min, [.. from item in traps select $"{item.Key}: {item.Value}"]);
             string scrapList = string.Join(min, [.. from item in scrapCounts select $"{item.Key.name}: {item.Value}"]);
-            string dungeon = currentDungeonType switch
-            {
-                -1 => "none",
-                0 => "factory",
-                1 => "mansion",
-                2 => "factory",
-                3 => "factory",
-                4 => "mineshaft",
-                _ => throw new NotImplementedException($"dungeon type: {currentDungeonType}")
-            };
             return $"seed: {seed}" +
                 $"{maj}moon: {config.currentLevel.name}{min}eclipsed: {config.eclipsed}" +
                 $"{maj}daystildeadline: {config.daysUntilDeadline}{min}dayssurvived: {config.daysPlayersSurvivedInARow}{min}players: {config.connectedPlayersAmount}{min}anniversary: {config.isAnniversary}" +
-                $"{maj}dungeon: {dungeon}{min}indoorfog: {indoorFog}{min}blackout: {blackout}{min}meteorshower: {meteorShower}{min}meteorshowertime: {meteorShowerAtTime}{min}companymood: {currentCompanyMood.name}" +
+                $"{maj}dungeon: {currentDungeonType}{min}indoorfog: {indoorFog}{min}blackout: {blackout}{min}meteorshower: {meteorShower}{min}meteorshowertime: {meteorShowerAtTime}{min}companymood: {currentCompanyMood.name}" +
                 $"{maj}infestation: {infestation?.name}{min}enemies: [{enemyList}]" +
                 $"{maj}numscrap: {numScrap}{min}singleitemday: {singleItemDay}{min}scrap: [{scrapList}]" +
                 $"{maj}traps: [{trapList}]";

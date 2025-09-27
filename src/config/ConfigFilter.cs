@@ -9,6 +9,19 @@ namespace LethalSeedCracker3.src.config
         internal bool Filter(FrozenResult result);
     }
 
+    internal class ConfigFilter(string cmd,
+        Func<FrozenResult, bool, bool> filter) : ConfigCommand(cmd), IConfigFilter
+    {
+        protected bool active = false;
+        internal override void Process(Config config)
+        {
+            this.active = true;
+        }
+        bool IConfigFilter.Filter(FrozenResult result)
+        {
+            return filter(result, this.active);
+        }
+    }
     internal class ConfigFilter<T0>(string cmd,
         Func<Config, string, T0> parser0, T0 default0, string name0,
         Func<FrozenResult, T0, bool> filter) : ConfigCommand<T0>(cmd, parser0, name0), IConfigFilter
@@ -43,12 +56,13 @@ namespace LethalSeedCracker3.src.config
 
     internal class ConfigFilters<T0>(string cmd,
         Func<Config, string, T0> parser0, string name0,
-        Func<FrozenResult, List<T0>, bool> filter) : ConfigCommand<T0>(cmd, parser0, name0), IConfigFilter
+        Func<FrozenResult, List<T0>, bool> filter, Action<Config, List<T0>>? validation = null) : ConfigCommand<T0>(cmd, parser0, name0), IConfigFilter
     {
         protected List<T0> arg0s = [];
         internal override void Process(Config config, T0 arg0)
         {
             arg0s.Add(arg0);
+            validation?.Invoke(config, arg0s);
         }
         bool IConfigFilter.Filter(FrozenResult result)
         {
@@ -58,7 +72,7 @@ namespace LethalSeedCracker3.src.config
     internal class ConfigFilters<T0, T1>(string cmd,
         Func<Config, string, T0> parser0, string name0,
         Func<Config, string, T1> parser1, string name1,
-        Func<FrozenResult, List<T0>, List<T1>, bool> filter) : ConfigCommand<T0, T1>(cmd, parser0, name0, parser1, name1), IConfigFilter
+        Func<FrozenResult, List<T0>, List<T1>, bool> filter, Action<Config, List<T0>, List<T1>>? validation = null) : ConfigCommand<T0, T1>(cmd, parser0, name0, parser1, name1), IConfigFilter
     {
         protected List<T0> arg0s = [];
         protected List<T1> arg1s = [];
@@ -66,6 +80,7 @@ namespace LethalSeedCracker3.src.config
         {
             arg0s.Add(arg0);
             arg1s.Add(arg1);
+            validation?.Invoke(config, arg0s, arg1s);
         }
         bool IConfigFilter.Filter(FrozenResult result)
         {
@@ -76,7 +91,7 @@ namespace LethalSeedCracker3.src.config
         Func<Config, string, T0> parser0, string name0,
         Func<Config, string, T1> parser1, string name1,
         Func<Config, string, T2> parser2, string name2,
-        Func<FrozenResult, List<T0>, List<T1>, List<T2>, bool> filter) : ConfigCommand<T0, T1, T2>(cmd, parser0, name0, parser1, name1, parser2, name2), IConfigFilter
+        Func<FrozenResult, List<T0>, List<T1>, List<T2>, bool> filter, Action<Config, List<T0>, List<T1>, List<T2>>? validation = null) : ConfigCommand<T0, T1, T2>(cmd, parser0, name0, parser1, name1, parser2, name2), IConfigFilter
     {
         protected List<T0> arg0s = [];
         protected List<T1> arg1s = [];
@@ -86,6 +101,7 @@ namespace LethalSeedCracker3.src.config
             arg0s.Add(arg0);
             arg1s.Add(arg1);
             arg2s.Add(arg2);
+            validation?.Invoke(config, arg0s, arg1s, arg2s);
         }
         bool IConfigFilter.Filter(FrozenResult result)
         {

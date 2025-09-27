@@ -8,17 +8,31 @@ namespace LethalSeedCracker3.Patches
     [HarmonyPatch(typeof(RoundManager))]
     internal class Cracker
     {
-        private static readonly Config config = new("config3.txt");
+        private static readonly Config config = LoadConfig("config3.txt");
 
         internal enum STATE
         {
             NONE,
+            INVALID,
             LOAD_SCENE,
             LOADED_SCENE,
             CRACKING,
         };
         internal static STATE curState;
         private static int seedsFound = 0;
+
+        private static Config? LoadConfig(string file)
+        {
+            try
+            {
+                return new(file);
+            }
+            catch (System.Exception e)
+            {
+                LethalSeedCracker3.Logger.LogError(e);
+                return null;
+            }
+        }
 
         [HarmonyPatch("Update")]
         [HarmonyPrefix]
@@ -27,6 +41,11 @@ namespace LethalSeedCracker3.Patches
             switch (curState)
             {
                 case STATE.NONE:
+                    if (config == null)
+                    {
+                        curState = STATE.INVALID;
+                        break;
+                    }
                     StartOfRound.Instance.NetworkManager.SceneManager.OnLoadComplete += OnLoadComplete;
                     StartOfRound.Instance.NetworkManager.SceneManager.LoadScene(config.currentLevel.sceneName, LoadSceneMode.Additive);
                     curState = STATE.LOAD_SCENE;
@@ -38,6 +57,8 @@ namespace LethalSeedCracker3.Patches
                     StartCracking();
                     break;
                 case STATE.CRACKING:
+                    break;
+                case STATE.INVALID:
                     break;
                 default:
                     throw new System.Exception($"Not implemented state: {curState}");

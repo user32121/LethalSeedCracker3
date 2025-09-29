@@ -29,6 +29,7 @@ namespace LethalSeedCracker3.src.cracker
         internal static void EvaluatePostScrap(Result result)
         {
             SetLockedDoors(result);
+            SetSteamValveTimes(result);
         }
 
         public static void GenerateNewFloor(Result result)
@@ -189,6 +190,26 @@ namespace LethalSeedCracker3.src.cracker
                 _ = result.crm.AnomalyRandom.Next();
                 Vector3 randomNavMeshPositionInBoxPredictable = CrackingRoundManager.GetRandomNavMeshPositionInBoxPredictable(Vector3.zero, 8f, result.crm.AnomalyRandom);
                 _ = randomNavMeshPositionInBoxPredictable;
+            }
+        }
+
+        private static void SetSteamValveTimes(Result result)
+        {
+            result.burstValves = 0;
+            System.Random random = new(result.seed + 513);
+            for (int num = 0; num < result.config.valveCount; num++)
+            {
+                if (random.NextDouble() < 0.75)
+                {
+                    ++result.burstValves;
+                    float valveBurstTime = Mathf.Clamp((float)random.NextDouble(), 0.2f, 1f);
+                    _ = valveBurstTime * (float)random.NextDouble();
+                    _ = Mathf.Clamp((float)random.NextDouble(), 0.6f, 0.98f);
+                }
+                else if (random.NextDouble() < 0.25)
+                {
+                    _ = Mathf.Clamp((float)random.NextDouble(), 0.3f, 0.9f);
+                }
             }
         }
     }

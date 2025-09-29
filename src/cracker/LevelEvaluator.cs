@@ -172,19 +172,19 @@ namespace LethalSeedCracker3.src.cracker
         private static void SetLockedDoors(Result result)
         {
             float num2 = 1.1f;
-            int numLockedDoors = 0;
-            for (int num4 = 0; num4 < 100; num4++)
+            result.lockedDoors = 0;
+            for (int i = 0; i < result.config.doorCount; i++)
             {
                 if (result.crm.LevelRandom.NextDouble() < (double)num2)
                 {
                     float timeToLockPick = Mathf.Clamp(result.crm.LevelRandom.Next(2, 90), 2f, 32f);
                     _ = timeToLockPick;
-                    numLockedDoors++;
+                    ++result.lockedDoors;
                 }
                 num2 /= 1.55f;
             }
             //instantiate keys
-            for (int i = 0; i < numLockedDoors; i++)
+            for (int i = 0; i < result.lockedDoors; i++)
             {
                 _ = result.crm.AnomalyRandom.Next();
                 Vector3 randomNavMeshPositionInBoxPredictable = CrackingRoundManager.GetRandomNavMeshPositionInBoxPredictable(Vector3.zero, 8f, result.crm.AnomalyRandom);

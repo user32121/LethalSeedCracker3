@@ -23,6 +23,7 @@ namespace LethalSeedCracker3.src.cracker
         internal float? meteorShowerAtTime;
         internal bool? blackout;
         internal Dictionary<string, int>? traps;
+        internal int? lockedDoors;
         //scrap
         internal int? numScrap;
         internal Item? singleItemDay;
@@ -68,6 +69,7 @@ namespace LethalSeedCracker3.src.cracker
         internal readonly float meteorShowerAtTime = Util.NonNull(result.meteorShowerAtTime, nameof(result.meteorShowerAtTime));
         internal readonly bool blackout = Util.NonNull(result.blackout, nameof(result.blackout));
         internal readonly Dictionary<string, int> traps = Util.NonNull(result.traps, nameof(result.traps));
+        internal readonly int lockedDoors = Util.NonNull(result.lockedDoors, nameof(result.lockedDoors));
         //scrap
         internal readonly int numScrap = Util.NonNull(result.numScrap, nameof(result.numScrap));
         internal readonly Item? singleItemDay = result.singleItemDay;
@@ -91,8 +93,8 @@ namespace LethalSeedCracker3.src.cracker
                 $"{maj}dungeon: {currentDungeonType}{min}indoorfog: {indoorFog}{min}blackout: {blackout}{min}meteorshower: {meteorShower}{min}meteorshowertime: {meteorShowerAtTime}{min}companymood: {currentCompanyMood.name}" +
                 $"{maj}infestation: {infestation?.name}{min}enemies: [{enemyList}]" +
                 $"{maj}numscrap: {numScrap}{min}singleitemday: {singleItemDay}{min}scrap: [{scrapList}]" +
-                $"{maj}traps: [{trapList}]" +
-                $"{maj}lightningcount: {lightningCount}, weather: [{weatherList}]";
+                $"{maj}doorcount: {config.doorCount}{min}lockeddoors: {lockedDoors}{min}traps: [{trapList}]" +
+                $"{maj}lightningcount: {lightningCount}{min}weather: [{weatherList}]";
         }
 
         internal void Save(string fileName, string compressedFileName, bool append)

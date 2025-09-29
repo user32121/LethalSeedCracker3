@@ -16,6 +16,7 @@ namespace LethalSeedCracker3.src.config
         internal int connectedPlayersAmount = 1;
         internal bool isAnniversary = false;
         internal bool eclipsed = false;
+        internal int doorCount = 0;
 
         private static readonly Func<Config, string, int> ParseInt = (config, s) => int.Parse(s);
         private static readonly Func<Config, string, float> ParseFloat = (config, s) => float.Parse(s);
@@ -32,6 +33,8 @@ namespace LethalSeedCracker3.src.config
             new ConfigParameter<int>("players", ParseInt, "players", (config, players) => config.connectedPlayersAmount = players),
             new ConfigParameter("anniversary", config => config.isAnniversary = true),
             new ConfigParameter("eclipsed", config => config.eclipsed = true),
+            new ConfigParameter<int>("setdoorcount", ParseInt, "num", (config, num) => config.doorCount = num),
+
             new ConfigFilter<EnemyType?>("infestation", ParseEnemy, null, "enemy", (result, enemy) => enemy == null || enemy == result.infestation),
             new ConfigFilters<EnemyType, Func<float, float, bool>, int>("enemy", ParseEnemy, "enemy", ParseComparator, "comparator", ParseInt, "num", (result, enemies, ops, nums) => {
                 for (int i = 0; i < enemies.Count; ++i) {
@@ -81,6 +84,7 @@ namespace LethalSeedCracker3.src.config
             }),
             new ConfigFilter<CompanyMood?>("companymood", ParseCompanyMood, null, "mood", (result, mood) => mood == null || mood == result.currentCompanyMood),
             new ConfigFilter<Func<float, float, bool>?, int>("lightning", ParseComparator, null, "comparator", ParseInt, 0, "num", (result, op, num) => op == null || op(result.lightningCount, num)),
+            new ConfigFilter<Func<float, float, bool>?, int>("lockeddoors", ParseComparator, null, "comparator", ParseInt, 0, "num", (result, op, num) => op == null || op(result.lockedDoors, num)),
         ];
 
         //convenience name mappings

@@ -8,11 +8,12 @@ namespace LethalSeedCracker3.Patches
     [HarmonyPatch(typeof(RoundManager))]
     internal class Cracker
     {
-        private static readonly Config config = LoadConfig("config3.txt");
+        private static Config config;
 
         internal enum STATE
         {
             NONE,
+            LOADED_CONFIG,
             INVALID,
             LOAD_SCENE,
             LOADED_SCENE,
@@ -20,6 +21,14 @@ namespace LethalSeedCracker3.Patches
         };
         internal static STATE curState;
         private static int seedsFound = 0;
+
+        [HarmonyPatch("Start")]
+        [HarmonyPostfix]
+        private static void StartPostfix()
+        {
+            config = LoadConfig("config3.txt");
+            curState = STATE.LOADED_CONFIG;
+        }
 
         private static Config? LoadConfig(string file)
         {
@@ -41,6 +50,8 @@ namespace LethalSeedCracker3.Patches
             switch (curState)
             {
                 case STATE.NONE:
+                    break;
+                case STATE.LOADED_CONFIG:
                     if (config == null)
                     {
                         curState = STATE.INVALID;

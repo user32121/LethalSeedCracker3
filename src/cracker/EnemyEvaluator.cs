@@ -21,15 +21,14 @@ namespace LethalSeedCracker3.src.cracker
         private static float currentOutsideEnemyPower;
         private static float currentEnemyPower;
 
-        //TODO evaluate nest spawning
         internal static void Evaluate(Result result)
         {
             if (result.config.verbose)
             {
                 LethalSeedCracker3.Logger.LogInfo("enemy evaluate");
             }
-            RefreshEnemiesList(result);
             ResetEnemySpawningVariables(result.config);
+            RefreshEnemiesList(result);
             while (currentHour < TimeOfDay.Instance.numberOfHours)
             {
                 AdvanceHourAndSpawnNewBatchOfEnemies(result);

@@ -93,7 +93,7 @@ namespace LethalSeedCracker3.src.cracker
                 $"{maj}moon: {config.currentLevel.name}{min}eclipsed: {config.eclipsed}" +
                 $"{maj}daystildeadline: {config.daysUntilDeadline}{min}dayssurvived: {config.daysPlayersSurvivedInARow}{min}players: {config.connectedPlayersAmount}{min}anniversary: {config.isAnniversary}" +
                 $"{maj}dungeon: {currentDungeonType}{min}indoorfog: {indoorFog}{min}blackout: {blackout}{min}meteorshower: {meteorShower}{min}meteorshowertime: {meteorShowerAtTime}{min}companymood: {currentCompanyMood.name}" +
-                $"{maj}infestation: {infestation?.name}{min}enemies: [{enemyList}]" +
+                $"{maj}infestation: {infestation?.name ?? "null"}{min}enemies: [{enemyList}]" +
                 $"{maj}numscrap: {numScrap}{min}singleitemday: {singleItemDay}{min}scrap: [{scrapList}]" +
                 $"{maj}doorcount: {config.doorCount}{min}lockeddoors: {lockedDoors}{min}valvecount: {config.valveCount}{min}burstvalves: {burstValves}{min}traps: [{trapList}]" +
                 $"{maj}lightningcount: {lightningCount}{min}weather: [{weatherList}]";

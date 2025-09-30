@@ -105,6 +105,7 @@ namespace LethalSeedCracker3.src.config
             [">="] = (x, y) => x >= y,
             ["<="] = (x, y) => x <= y,
             ["=="] = (x, y) => x == y,
+            ["!="] = (x, y) => x != y,
         };
 
         private static bool IContains(string text, string substr) => substr.Length > 0 && text.Contains(substr, StringComparison.InvariantCultureIgnoreCase);

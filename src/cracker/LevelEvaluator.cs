@@ -67,18 +67,15 @@ namespace LethalSeedCracker3.src.cracker
 
         public static void SpawnMapObjects(Result result)
         {
+            result.traps = [];
             if (result.config.currentLevel.spawnableMapObjects.Length == 0)
             {
                 return;
             }
             System.Random random = new(StartOfRound.Instance.randomMapSeed + 587);
-            RandomMapObject[] array = Object.FindObjectsOfType<RandomMapObject>();
-            EntranceTeleport[] array2 = Object.FindObjectsByType<EntranceTeleport>(FindObjectsSortMode.None);
             List<Vector3> list = [];
-            List<RandomMapObject> list2 = [];
             for (int i = 0; i < result.config.currentLevel.spawnableMapObjects.Length; i++)
             {
-                list2.Clear();
                 int num = (int)result.config.currentLevel.spawnableMapObjects[i].numberToSpawn.Evaluate((float)random.NextDouble());
                 if (increasedMapHazardSpawnRateIndex == i)
                 {
@@ -88,51 +85,11 @@ namespace LethalSeedCracker3.src.cracker
                 {
                     continue;
                 }
-                for (int j = 0; j < array.Length; j++)
-                {
-                    if (array[j].spawnablePrefabs.Contains(result.config.currentLevel.spawnableMapObjects[i].prefabToSpawn))
-                    {
-                        list2.Add(array[j]);
-                    }
-                }
-                if (list2.Count == 0)
-                {
-                    //Debug.Log("NO SPAWNERS WERE COMPATIBLE WITH THE SPAWNABLE MAP OBJECT: '" + result.config.currentLevel.spawnableMapObjects[i].prefabToSpawn.gameObject.name + "'");
-                    continue;
-                }
                 list.Clear();
                 for (int k = 0; k < num; k++)
                 {
-                    RandomMapObject randomMapObject = list2[random.Next(0, list2.Count)];
-                    Vector3 position = randomMapObject.transform.position;
-                    position = CrackingRoundManager.GetRandomNavMeshPositionInBoxPredictable(position, randomMapObject.spawnRange, random);
-                    if (result.config.currentLevel.spawnableMapObjects[i].disallowSpawningNearEntrances)
-                    {
-                        for (int l = 0; l < array2.Length; l++)
-                        {
-                            if (!array2[l].isEntranceToBuilding)
-                            {
-                                Vector3.Distance(array2[l].entrancePoint.transform.position, position);
-                                _ = 5.5f;
-                            }
-                        }
-                    }
-                    if (result.config.currentLevel.spawnableMapObjects[i].requireDistanceBetweenSpawns)
-                    {
-                        bool flag = false;
-                        for (int m = 0; m < list.Count; m++)
-                        {
-                            if (Vector3.Distance(position, list[m]) < 5f)
-                            {
-                                flag = true;
-                                break;
-                            }
-                        }
-                        if (flag)
-                        {
-                            continue;
-                        }
-                    }
+                    _ = random.Next();
+                    _ = CrackingRoundManager.GetRandomNavMeshPositionInBoxPredictable(Vector3.zero, 10, random);
                     if (result.config.currentLevel.spawnableMapObjects[i].spawnFacingAwayFromWall)
                     {
                     }
@@ -143,13 +100,9 @@ namespace LethalSeedCracker3.src.cracker
                     {
                         _ = random.Next(0, 360);
                     }
+                    result.traps[result.config.currentLevel.spawnableMapObjects[i].prefabToSpawn.name] = result.traps.GetValueOrDefault(result.config.currentLevel.spawnableMapObjects[i].prefabToSpawn.name, 0) + 1;
                 }
             }
-            for (int n = 0; n < array.Length; n++)
-            {
-                Object.Destroy(array[n].gameObject);
-            }
-            result.traps = []; //TODO
         }
 
         private static void BeginDay(Result result)

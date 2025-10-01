@@ -8,7 +8,9 @@ namespace LethalSeedCracker3.Patches
     [HarmonyPatch(typeof(RoundManager))]
     internal class Cracker
     {
+#pragma warning disable CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider adding the 'required' modifier or declaring as nullable.
         private static Config config;
+#pragma warning restore CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider adding the 'required' modifier or declaring as nullable.
 
         internal enum STATE
         {
@@ -20,7 +22,6 @@ namespace LethalSeedCracker3.Patches
             CRACKING,
         };
         internal static STATE curState;
-        private static int seedsFound = 0;
 
         [HarmonyPatch("Start")]
         [HarmonyPostfix]
@@ -30,7 +31,7 @@ namespace LethalSeedCracker3.Patches
             curState = STATE.LOADED_CONFIG;
         }
 
-        private static Config? LoadConfig(string file)
+        private static Config LoadConfig(string file)
         {
             try
             {
@@ -39,7 +40,9 @@ namespace LethalSeedCracker3.Patches
             catch (System.Exception e)
             {
                 LethalSeedCracker3.Logger.LogError(e);
+#pragma warning disable CS8603 // Possible null reference return.
                 return null;
+#pragma warning restore CS8603 // Possible null reference return.
             }
         }
 
@@ -83,6 +86,7 @@ namespace LethalSeedCracker3.Patches
 
         private static void StartCracking()
         {
+            int seedsFound = 0;
             for (int curSeed = config.min_seed; curSeed <= config.max_seed; ++curSeed)
             {
                 if (curSeed % 1000 == 0)

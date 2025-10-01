@@ -15,11 +15,11 @@ namespace LethalSeedCracker3.src.config
         protected bool active = false;
         internal override void Process(Config config)
         {
-            this.active = true;
+            active = true;
         }
         bool IConfigFilter.Filter(FrozenResult result)
         {
-            return filter(result, this.active);
+            return filter(result, active);
         }
     }
     internal class ConfigFilter<T0>(string cmd,

@@ -7,8 +7,12 @@ namespace LethalSeedCracker3.src.cracker
 {
     internal static class WeatherEvaluator
     {
-        private static Vector3 lastRandomStrikePosition;
+#pragma warning disable CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider adding the 'required' modifier or declaring as nullable.
         private static System.Random targetedThunderRandom;
+        private static GameObject[] outsideNodes;
+        private static System.Random seed;
+#pragma warning restore CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider adding the 'required' modifier or declaring as nullable.
+        private static Vector3 lastRandomStrikePosition;
         private static float globalTime;
         private static float globalTimeAtEndOfDay;
         private static float currentDayTime;
@@ -16,8 +20,6 @@ namespace LethalSeedCracker3.src.cracker
         private static float randomThunderTime;
         private static float timeAtLastStrike;
         private static NavMeshHit navHit;
-        private static GameObject[] outsideNodes;
-        private static System.Random seed;
         private static float currentWeatherVariable;
         private static RaycastHit rayHit;
 

@@ -157,5 +157,21 @@ namespace LethalSeedCracker3.src.cracker
             }
             return Random.Range(num - 15, num + 15);
         }
+
+        public static Vector3 PositionEdgeCheck(Vector3 position, float width)
+        {
+            NavMeshHit navHit;
+            if (NavMesh.FindClosestEdge(position, out navHit, -1) && navHit.distance < width)
+            {
+                Vector3 position2 = navHit.position;
+                if (NavMesh.SamplePosition(new Ray(position2, position - position2).GetPoint(width + 0.5f), out navHit, 10f, -1))
+                {
+                    position = navHit.position;
+                    return position;
+                }
+                return Vector3.zero;
+            }
+            return position;
+        }
     }
 }

@@ -16,24 +16,23 @@ namespace LethalSeedCracker3.src.config
         internal int connectedPlayersAmount = 1;
         internal bool isAnniversary = false;
         internal bool eclipsed = false;
+        internal bool rainy = false;
         internal int doorCount = 0;
         internal int valveCount = 0;
 
         private static readonly Func<Config, string, int> ParseInt = (config, s) => int.Parse(s);
         private static readonly Func<Config, string, float> ParseFloat = (config, s) => float.Parse(s);
-        private static readonly List<BaseConfigCommand> commands =
+        private readonly List<BaseConfigCommand> commands =
         [
-            new ConfigParameter("verbose", config => config.verbose= true),
-            new ConfigParameter<int, int>("seed", ParseInt, "min", ParseInt, "max", (config, min, max) => {
-                config.min_seed = min;
-                config.max_seed = max;
-            }),
+            new ConfigParameter("verbose", config => config.verbose = true),
+            new ConfigParameter<int, int>("seed", ParseInt, "min", ParseInt, "max", (config, min, max) => { config.min_seed = min; config.max_seed = max; }),
             new ConfigParameter<SelectableLevel>("moon", ParseMoon, "moon", (config, moon) => config.currentLevel = moon),
             new ConfigParameter<int>("daystildeadline", ParseInt, "days", (config, days) => config.daysUntilDeadline = days),
             new ConfigParameter<int>("dayssurvived", ParseInt, "days", (config, days) => config.daysPlayersSurvivedInARow = days),
             new ConfigParameter<int>("players", ParseInt, "players", (config, players) => config.connectedPlayersAmount = players),
             new ConfigParameter("anniversary", config => config.isAnniversary = true),
             new ConfigParameter("eclipsed", config => config.eclipsed = true),
+            new ConfigParameter("rainy", config => config.rainy = true),
             new ConfigParameter<int>("setdoorcount", ParseInt, "num", (config, num) => config.doorCount = num),
             new ConfigParameter<int>("setvalvecount", ParseInt, "num", (config, num) => config.valveCount = num),
 
@@ -79,6 +78,14 @@ namespace LethalSeedCracker3.src.config
             new ConfigFilters<string, Func<float, float, bool>, int>("trap", ParseTrap, "trap", ParseComparator, "comparator", ParseInt, "num", (result, traps, ops, nums) => {
                 for (int i = 0; i < traps.Count; ++i) {
                     if (!ops[i](result.traps.GetValueOrDefault(traps[i], 0), nums[i])) {
+                        return false;
+                    }
+                }
+                return true;
+            }),
+            new ConfigFilters<string, Func<float, float, bool>, int>("outsideobject", ParseOutsideObject, "object", ParseComparator, "comparator", ParseInt, "num", (result, objs, ops, nums) => {
+                for (int i = 0; i < objs.Count; ++i) {
+                    if (!ops[i](result.outsideObjects.GetValueOrDefault(objs[i], 0), nums[i])) {
                         return false;
                     }
                 }
@@ -312,7 +319,28 @@ namespace LethalSeedCracker3.src.config
             throw new Exception($"Unrecognized trap: {name}");
         }
 
-        private static void PrintCommands()
+        private static string ParseOutsideObject(Config config, string name)
+        {
+            if (config.currentLevel is null)
+            {
+                throw new Exception("Set a moon before configuring traps.");
+            }
+            foreach (var item in config.currentLevel.spawnableOutsideObjects)
+            {
+                if (IContains(item.spawnableObject.prefabToSpawn.name, name))
+                {
+                    return item.spawnableObject.prefabToSpawn.name;
+                }
+            }
+            if (IContains(RoundManager.Instance.quicksandPrefab.name, name))
+            {
+                return RoundManager.Instance.quicksandPrefab.name;
+            }
+            PrintOutsideObjects(config);
+            throw new Exception($"Unrecognized trap: {name}");
+        }
+
+        private void PrintCommands()
         {
             LethalSeedCracker3.Logger.LogInfo("Commands:");
             foreach (var item in commands)
@@ -393,11 +421,21 @@ namespace LethalSeedCracker3.src.config
 
         private static void PrintTraps(Config config)
         {
-            LethalSeedCracker3.Logger.LogInfo("Trap:");
+            LethalSeedCracker3.Logger.LogInfo("Traps:");
             foreach (var item in config.currentLevel.spawnableScrap)
             {
                 LethalSeedCracker3.Logger.LogInfo($"{item.spawnableItem.name}, {item.spawnableItem.itemName}");
             }
+        }
+
+        private static void PrintOutsideObjects(Config config)
+        {
+            LethalSeedCracker3.Logger.LogInfo("Outside objects:");
+            foreach (var item in config.currentLevel.spawnableOutsideObjects)
+            {
+                LethalSeedCracker3.Logger.LogInfo($"{item.spawnableObject.prefabToSpawn.name}");
+            }
+            LethalSeedCracker3.Logger.LogInfo($"{RoundManager.Instance.quicksandPrefab.name}");
         }
 
         //Find the smallest int that satisfies f

@@ -23,6 +23,7 @@ namespace LethalSeedCracker3.src.cracker
         internal float? meteorShowerAtTime;
         internal bool? blackout;
         internal Dictionary<string, int>? traps;
+        internal Dictionary<string, int>? outsideObjects;
         internal int? lockedDoors;
         internal int? burstValves;
         //scrap
@@ -70,6 +71,7 @@ namespace LethalSeedCracker3.src.cracker
         internal readonly float meteorShowerAtTime = Util.NonNull(result.meteorShowerAtTime, nameof(result.meteorShowerAtTime));
         internal readonly bool blackout = Util.NonNull(result.blackout, nameof(result.blackout));
         internal readonly Dictionary<string, int> traps = Util.NonNull(result.traps, nameof(result.traps));
+        internal readonly Dictionary<string, int> outsideObjects = Util.NonNull(result.outsideObjects, nameof(result.outsideObjects));
         internal readonly int lockedDoors = Util.NonNull(result.lockedDoors, nameof(result.lockedDoors));
         internal readonly int burstValves = Util.NonNull(result.burstValves, nameof(result.burstValves));
         //scrap
@@ -87,6 +89,7 @@ namespace LethalSeedCracker3.src.cracker
             string min = minorSeparator;
             string enemyList = string.Join(min, [.. from item in enemies select $"{item.Key.name}: {item.Value}"]);
             string trapList = string.Join(min, [.. from item in traps select $"{item.Key}: {item.Value}"]);
+            string outsideObjectList = string.Join(min, [.. from item in outsideObjects select $"{item.Key}: {item.Value}"]);
             string scrapList = string.Join(min, [.. from item in scrapCounts select $"{item.Key.name}: {item.Value}"]);
             string weatherList = string.Join(min, [.. from item in weathers select $"{item.Key.name}: {item.Value}"]);
             return $"seed: {seed}" +
@@ -96,6 +99,7 @@ namespace LethalSeedCracker3.src.cracker
                 $"{maj}infestation: {infestation?.name ?? "null"}{min}enemies: [{enemyList}]" +
                 $"{maj}numscrap: {numScrap}{min}singleitemday: {singleItemDay}{min}scrap: [{scrapList}]" +
                 $"{maj}doorcount: {config.doorCount}{min}lockeddoors: {lockedDoors}{min}valvecount: {config.valveCount}{min}burstvalves: {burstValves}{min}traps: [{trapList}]" +
+                $"{maj}outsideobjects: [{outsideObjectList}]" +
                 $"{maj}lightningcount: {lightningCount}{min}weather: [{weatherList}]";
         }
 

@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 
 namespace LethalSeedCracker3.src.cracker
@@ -6,6 +7,10 @@ namespace LethalSeedCracker3.src.cracker
     internal class LevelEvaluator
     {
         private static readonly int increasedMapHazardSpawnRateIndex = -1;
+#pragma warning disable CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider adding the 'required' modifier or declaring as nullable.
+        private static GameObject[] outsideAINodes;
+        private static GameObject[] spawnDenialPoints;
+#pragma warning restore CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider adding the 'required' modifier or declaring as nullable.
 
         internal static void EvaluatePreDunGen(Result result)
         {
@@ -22,6 +27,7 @@ namespace LethalSeedCracker3.src.cracker
             {
                 LethalSeedCracker3.Logger.LogInfo("level evaluate post");
             }
+            SpawnOutsideHazards(result);
             SpawnMapObjects(result);
             BeginDay(result);
         }
@@ -121,6 +127,137 @@ namespace LethalSeedCracker3.src.cracker
             result.blackout = new System.Random(result.seed + 3).NextDouble() < 0.07999999821186066;
 
             result.currentCompanyMood = TimeOfDay.Instance.CommonCompanyMoods[new System.Random(result.seed + 164).Next(0, TimeOfDay.Instance.CommonCompanyMoods.Length)];
+        }
+
+        private static void SpawnOutsideHazards(Result result)
+        {
+            result.outsideObjects = [];
+
+            System.Random random = new(result.seed + 2);
+            outsideAINodes = [.. from x in GameObject.FindGameObjectsWithTag("OutsideAINode")
+                              orderby Vector3.Distance(x.transform.position, Vector3.zero)
+                              select x];
+            int num = 0;
+            if (result.config.rainy)
+            {
+                num = random.Next(5, 15);
+                if (random.Next(0, 100) < 7)
+                {
+                    num = random.Next(5, 30);
+                }
+                for (int num2 = 0; num2 < num; num2++)
+                {
+                    Vector3 position = outsideAINodes[random.Next(0, outsideAINodes.Length)].transform.position;
+                    Vector3 position2 = CrackingRoundManager.GetRandomNavMeshPositionInBoxPredictable(position, 30f, random) + Vector3.up;
+                    result.outsideObjects[RoundManager.Instance.quicksandPrefab.name] = result.outsideObjects.GetValueOrDefault(RoundManager.Instance.quicksandPrefab.name, 0) + 1;
+                }
+            }
+            int num3 = 0;
+            List<Vector3> list = [];
+            spawnDenialPoints = GameObject.FindGameObjectsWithTag("SpawnDenialPoint");
+            if (result.config.currentLevel.spawnableOutsideObjects != null)
+            {
+                for (int num4 = 0; num4 < result.config.currentLevel.spawnableOutsideObjects.Length; num4++)
+                {
+                    double num5 = random.NextDouble();
+                    num = (int)result.config.currentLevel.spawnableOutsideObjects[num4].randomAmount.Evaluate((float)num5);
+                    if (random.Next(0, 100) < 20f)
+                    {
+                        num *= 2;
+                    }
+                    for (int num6 = 0; num6 < num; num6++)
+                    {
+                        int num7 = random.Next(0, outsideAINodes.Length);
+                        Vector3 position2 = CrackingRoundManager.GetRandomNavMeshPositionInBoxPredictable(outsideAINodes[num7].transform.position, 30f, random);
+                        if (result.config.currentLevel.spawnableOutsideObjects[num4].spawnableObject.spawnableFloorTags != null)
+                        {
+                            bool flag = false;
+                            if (Physics.Raycast(position2 + Vector3.up, Vector3.down, out var hitInfo, 5f, StartOfRound.Instance.collidersAndRoomMaskAndDefault))
+                            {
+                                for (int num8 = 0; num8 < result.config.currentLevel.spawnableOutsideObjects[num4].spawnableObject.spawnableFloorTags.Length; num8++)
+                                {
+                                    if (hitInfo.collider.transform.CompareTag(result.config.currentLevel.spawnableOutsideObjects[num4].spawnableObject.spawnableFloorTags[num8]))
+                                    {
+                                        flag = true;
+                                        break;
+                                    }
+                                }
+                            }
+                            if (!flag)
+                            {
+                                continue;
+                            }
+                        }
+                        position2 = CrackingRoundManager.PositionEdgeCheck(position2, result.config.currentLevel.spawnableOutsideObjects[num4].spawnableObject.objectWidth);
+                        if (position2 == Vector3.zero)
+                        {
+                            continue;
+                        }
+                        bool flag2 = false;
+                        for (int num9 = 0; num9 < RoundManager.Instance.shipSpawnPathPoints.Length; num9++)
+                        {
+                            if (Vector3.Distance(RoundManager.Instance.shipSpawnPathPoints[num9].transform.position, position2) < result.config.currentLevel.spawnableOutsideObjects[num4].spawnableObject.objectWidth + 6f)
+                            {
+                                flag2 = true;
+                                break;
+                            }
+                        }
+                        if (flag2)
+                        {
+                            continue;
+                        }
+                        for (int num10 = 0; num10 < spawnDenialPoints.Length; num10++)
+                        {
+                            if (Vector3.Distance(spawnDenialPoints[num10].transform.position, position2) < result.config.currentLevel.spawnableOutsideObjects[num4].spawnableObject.objectWidth + 6f)
+                            {
+                                flag2 = true;
+                                break;
+                            }
+                        }
+                        if (flag2)
+                        {
+                            continue;
+                        }
+                        if (Vector3.Distance(GameObject.FindGameObjectWithTag("ItemShipLandingNode").transform.position, position2) < result.config.currentLevel.spawnableOutsideObjects[num4].spawnableObject.objectWidth + 4f)
+                        {
+                            flag2 = true;
+                            break;
+                        }
+                        if (flag2)
+                        {
+                            continue;
+                        }
+                        if (result.config.currentLevel.spawnableOutsideObjects[num4].spawnableObject.objectWidth > 4)
+                        {
+                            flag2 = false;
+                            for (int num11 = 0; num11 < list.Count; num11++)
+                            {
+                                if (Vector3.Distance(position2, list[num11]) < result.config.currentLevel.spawnableOutsideObjects[num4].spawnableObject.objectWidth)
+                                {
+                                    flag2 = true;
+                                    break;
+                                }
+                            }
+                            if (flag2)
+                            {
+                                continue;
+                            }
+                        }
+                        list.Add(position2);
+                        result.outsideObjects[result.config.currentLevel.spawnableOutsideObjects[num4].spawnableObject.prefabToSpawn.name] = result.outsideObjects.GetValueOrDefault(result.config.currentLevel.spawnableOutsideObjects[num4].spawnableObject.prefabToSpawn.name, 0) + 1;
+                        num3++;
+                        if (result.config.currentLevel.spawnableOutsideObjects[num4].spawnableObject.spawnFacingAwayFromWall)
+                        {
+                            _ = new Vector3(0f, CrackingRoundManager.YRotationThatFacesTheFarthestFromPosition(position2 + Vector3.up * 0.2f), 0f);
+                        }
+                        else
+                        {
+                            int num12 = random.Next(0, 360);
+                            _ = new Vector3(0, num12, 0);
+                        }
+                    }
+                }
+            }
         }
 
         private static void SetLockedDoors(Result result)

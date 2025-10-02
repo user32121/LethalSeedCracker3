@@ -80,7 +80,7 @@ namespace LethalSeedCracker3.src.cracker
             globalTimeAtEndOfDay = globalTime + (TimeOfDay.Instance.totalTime - currentDayTime) / result.config.currentLevel.DaySpeedMultiplier;
 
             lastRandomStrikePosition = Vector3.zero;
-            targetedThunderRandom = new System.Random(StartOfRound.Instance.randomMapSeed);
+            targetedThunderRandom = new System.Random(result.seed);
             lastGlobalTimeUsed = 0f;
             randomThunderTime = globalTime + 7f;
             timeAtLastStrike = globalTime;

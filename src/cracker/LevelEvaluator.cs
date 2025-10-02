@@ -78,7 +78,7 @@ namespace LethalSeedCracker3.src.cracker
             {
                 return;
             }
-            System.Random random = new(StartOfRound.Instance.randomMapSeed + 587);
+            System.Random random = new(result.seed + 587);
             List<Vector3> list = [];
             for (int i = 0; i < result.config.currentLevel.spawnableMapObjects.Length; i++)
             {

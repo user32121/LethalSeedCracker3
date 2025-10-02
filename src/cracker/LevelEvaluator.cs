@@ -131,6 +131,10 @@ namespace LethalSeedCracker3.src.cracker
 
         private static void SpawnOutsideHazards(Result result)
         {
+            if (result.config.verbose)
+            {
+                LethalSeedCracker3.Logger.LogInfo("spawn outside hazards");
+            }
             result.outsideObjects = [];
 
             System.Random random = new(result.seed + 2);
@@ -188,10 +192,22 @@ namespace LethalSeedCracker3.src.cracker
                                 continue;
                             }
                         }
+                        if (result.config.verbose)
+                        {
+                            LethalSeedCracker3.Logger.LogInfo($"position edge check ({position2}, {result.config.currentLevel.spawnableOutsideObjects[num4].spawnableObject.objectWidth})");
+                        }
                         position2 = CrackingRoundManager.PositionEdgeCheck(position2, result.config.currentLevel.spawnableOutsideObjects[num4].spawnableObject.objectWidth);
+                        if (result.config.verbose)
+                        {
+                            LethalSeedCracker3.Logger.LogInfo($"=> {position2}");
+                        }
                         if (position2 == Vector3.zero)
                         {
                             continue;
+                        }
+                        if (result.config.verbose)
+                        {
+                            LethalSeedCracker3.Logger.LogInfo("ship spawn point check");
                         }
                         bool flag2 = false;
                         for (int num9 = 0; num9 < RoundManager.Instance.shipSpawnPathPoints.Length; num9++)
@@ -206,6 +222,10 @@ namespace LethalSeedCracker3.src.cracker
                         {
                             continue;
                         }
+                        if (result.config.verbose)
+                        {
+                            LethalSeedCracker3.Logger.LogInfo("spawn denial point check");
+                        }
                         for (int num10 = 0; num10 < spawnDenialPoints.Length; num10++)
                         {
                             if (Vector3.Distance(spawnDenialPoints[num10].transform.position, position2) < result.config.currentLevel.spawnableOutsideObjects[num4].spawnableObject.objectWidth + 6f)
@@ -218,6 +238,10 @@ namespace LethalSeedCracker3.src.cracker
                         {
                             continue;
                         }
+                        if (result.config.verbose)
+                        {
+                            LethalSeedCracker3.Logger.LogInfo("ship landing node check");
+                        }
                         if (Vector3.Distance(GameObject.FindGameObjectWithTag("ItemShipLandingNode").transform.position, position2) < result.config.currentLevel.spawnableOutsideObjects[num4].spawnableObject.objectWidth + 4f)
                         {
                             flag2 = true;
@@ -226,6 +250,10 @@ namespace LethalSeedCracker3.src.cracker
                         if (flag2)
                         {
                             continue;
+                        }
+                        if (result.config.verbose)
+                        {
+                            LethalSeedCracker3.Logger.LogInfo("outside hazards check");
                         }
                         if (result.config.currentLevel.spawnableOutsideObjects[num4].spawnableObject.objectWidth > 4)
                         {

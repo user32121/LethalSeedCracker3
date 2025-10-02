@@ -160,8 +160,7 @@ namespace LethalSeedCracker3.src.cracker
 
         public static Vector3 PositionEdgeCheck(Vector3 position, float width)
         {
-            NavMeshHit navHit;
-            if (NavMesh.FindClosestEdge(position, out navHit, -1) && navHit.distance < width)
+            if (NavMesh.FindClosestEdge(position, out NavMeshHit navHit, -1) && navHit.distance < width)
             {
                 Vector3 position2 = navHit.position;
                 if (NavMesh.SamplePosition(new Ray(position2, position - position2).GetPoint(width + 0.5f), out navHit, 10f, -1))

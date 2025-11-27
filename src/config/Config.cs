@@ -422,9 +422,9 @@ namespace LethalSeedCracker3.src.config
         private static void PrintTraps(Config config)
         {
             LethalSeedCracker3.Logger.LogInfo("Traps:");
-            foreach (var item in config.currentLevel.spawnableScrap)
+            foreach (var item in config.currentLevel.spawnableMapObjects)
             {
-                LethalSeedCracker3.Logger.LogInfo($"{item.spawnableItem.name}, {item.spawnableItem.itemName}");
+                LethalSeedCracker3.Logger.LogInfo($"{item.prefabToSpawn.name}");
             }
         }
 

@@ -1,5 +1,6 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
+using Unity.AI.Navigation;
 using UnityEngine;
 
 namespace LethalSeedCracker3.src.cracker
@@ -134,6 +135,10 @@ namespace LethalSeedCracker3.src.cracker
             if (result.config.verbose)
             {
                 LethalSeedCracker3.Logger.LogInfo("spawn outside hazards");
+                foreach (var item in Object.FindObjectsOfType<NavMeshSurface>())
+                {
+                    LethalSeedCracker3.Logger.LogInfo($"navmesh {item} {item.gameObject.scene.name}");
+                }
             }
             result.outsideObjects = [];
 

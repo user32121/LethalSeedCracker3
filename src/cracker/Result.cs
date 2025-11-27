@@ -98,7 +98,7 @@ namespace LethalSeedCracker3.src.cracker
                 $"{maj}dungeon: {currentDungeonType}{min}indoorfog: {indoorFog}{min}blackout: {blackout}{min}meteorshower: {meteorShower}{min}meteorshowertime: {meteorShowerAtTime}{min}companymood: {currentCompanyMood.name}" +
                 $"{maj}infestation: {infestation?.name ?? "null"}{min}enemies: [{enemyList}]" +
                 $"{maj}numscrap: {numScrap}{min}singleitemday: {singleItemDay}{min}scrap: [{scrapList}]" +
-                $"{maj}doorcount: {config.doorCount}{min}lockeddoors: {lockedDoors}{min}valvecount: {config.valveCount}{min}burstvalves: {burstValves}{min}traps: [{trapList}]" +
+                $"{maj}setdoorcount: {config.doorCount}{min}lockeddoors: {lockedDoors}{min}setvalvecount: {config.valveCount}{min}burstvalves: {burstValves}{min}traps: [{trapList}]" +
                 $"{maj}outsideobjects: [{outsideObjectList}]" +
                 $"{maj}lightningcount: {lightningCount}{min}weather: [{weatherList}]";
         }
